@@ -5,407 +5,541 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#060a18">
-<title>상인 키우기</title>
+<title>상인 키우기 타이쿤</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700;900&family=Noto+Serif+KR:wght@400;700&display=swap');
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--sky:#060a18;--sky2:#0c1228;--gold:#e8c860;--gold2:#b09030;--gold3:#806820;
 --frost:#88bbdd;--hp:#66cc88;--mp:#5599dd;--dmg:#cc6655;--xp:#ddbb44;
---txt:#dce0ec;--txt2:#a0a8c0;--dim:#606880;
+--warm:#ffe0b0;--txt:#dce0ec;--txt2:#a0a8c0;--dim:#606880;
 --card:rgba(12,18,40,.88);--edge:rgba(100,120,160,.2);
---rare:#5599dd;--epic:#9966cc;--legend:#ddaa44;--warm:#ffe0b0}
+--rare:#5599dd;--epic:#9966cc;--legend:#ddaa44}
 html{scroll-behavior:smooth}
 body{font-family:'Noto Sans KR',sans-serif;background:var(--sky);color:var(--txt);min-height:100vh;overflow-x:hidden;font-size:15px;line-height:1.6}
-.sky-layer{position:fixed;inset:0;pointer-events:none;z-index:0}.sky-layer canvas{width:100%;height:100%}
-.snow-layer{position:fixed;inset:0;pointer-events:none;z-index:1}.snow-layer canvas{width:100%;height:100%}
+.sky-layer,.snow-layer{position:fixed;inset:0;pointer-events:none}.sky-layer{z-index:0}.snow-layer{z-index:1}
+.sky-layer canvas,.snow-layer canvas{width:100%;height:100%}
 .content{position:relative;z-index:2}
-.header{text-align:center;padding:16px 16px 12px;background:linear-gradient(180deg,rgba(6,10,24,.96),rgba(12,18,40,.9));border-bottom:1px solid var(--edge);position:sticky;top:0;z-index:100;backdrop-filter:blur(12px)}
-.header h1{font-family:'Noto Serif KR',serif;font-size:clamp(17px,3.5vw,24px);color:var(--warm);letter-spacing:3px;font-weight:700;text-shadow:0 0 15px rgba(255,170,80,.15)}
-.h-sub{font-size:11px;color:var(--dim);margin-top:2px;letter-spacing:2px}
-.hud{display:flex;justify-content:center;gap:6px;margin-top:8px;flex-wrap:wrap}
-.hud-item{display:flex;align-items:center;gap:3px;background:rgba(0,0,0,.25);border:1px solid var(--edge);border-radius:8px;padding:4px 10px;font-size:12px}
-.hud-item .hi{font-size:14px}.hud-item .hv{font-weight:700;color:var(--gold)}
-.wrap{max-width:920px;margin:0 auto;padding:14px}
-.sec{display:flex;align-items:center;gap:12px;margin:28px 0 14px}
+
+/* ══ TYCOON HUD (game-style top bar) ══ */
+.t-hud{display:flex;justify-content:center;gap:4px;padding:8px 12px;background:linear-gradient(180deg,rgba(6,10,24,.97),rgba(12,18,40,.92));border-bottom:1px solid var(--edge);position:sticky;top:0;z-index:100;backdrop-filter:blur(14px);flex-wrap:wrap;align-items:center}
+.t-hud-title{font-family:'Noto Serif KR';font-size:clamp(12px,2.5vw,16px);color:var(--warm);letter-spacing:2px;margin-right:8px;font-weight:700}
+.t-res{display:flex;align-items:center;gap:2px;background:rgba(0,0,0,.35);border:1px solid var(--edge);border-radius:20px;padding:3px 10px 3px 6px;font-size:11px;position:relative;overflow:hidden}
+.t-res::before{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.03),transparent);animation:resShine 4s ease-in-out infinite}
+@keyframes resShine{0%{left:-100%}100%{left:200%}}
+.t-res .ri{font-size:14px}.t-res .rv{font-weight:900;color:var(--gold)}
+.t-res-up .rv{color:var(--hp)}.t-res-dn .rv{color:var(--dmg)}
+
+.wrap{max-width:920px;margin:0 auto;padding:8px 12px}
+.sec{display:flex;align-items:center;gap:8px;margin:22px 0 10px}
 .sec-l{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--edge),transparent)}
-.sec-t{font-family:'Noto Serif KR',serif;font-size:15px;color:var(--warm);white-space:nowrap;letter-spacing:2px}
-.loading{text-align:center;padding:30px;font-size:14px;color:var(--dim)}
-.loading .spinner{font-size:20px;animation:spin 2s ease-in-out infinite;display:block;margin-bottom:8px}
-@keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
-.refresh{text-align:center;padding:6px;font-size:12px;color:var(--dim)}
-.refresh button{background:rgba(0,0,0,.2);border:1px solid var(--edge);color:var(--gold);padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px;margin-left:6px}
+.sec-t{font-family:'Noto Serif KR',serif;font-size:13px;color:var(--warm);white-space:nowrap;letter-spacing:1px}
+.refresh{text-align:center;padding:3px;font-size:10px;color:var(--dim)}
+.refresh button{background:rgba(0,0,0,.2);border:1px solid var(--edge);color:var(--gold);padding:2px 6px;border-radius:3px;cursor:pointer;font-size:9px;margin-left:3px}
 
-/* SCENE */
-.scene{position:relative;border-radius:20px;overflow:hidden;min-height:320px;background:linear-gradient(180deg,var(--sky),#0a1028 30%,#101830 60%,#141c38);border:1px solid var(--edge)}
-.scene canvas.sbg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
-.scene-ground{position:absolute;bottom:0;left:0;right:0;height:70px;z-index:2;background:linear-gradient(180deg,rgba(200,210,230,.06),rgba(180,195,220,.1),rgba(160,180,210,.13))}
-.scene-glow{position:absolute;bottom:12%;left:50%;transform:translateX(-50%);width:50%;height:30%;z-index:2;background:radial-gradient(ellipse,rgba(255,170,80,.05),transparent);animation:sg 4s ease-in-out infinite;pointer-events:none}
-@keyframes sg{0%,100%{opacity:.4}50%{opacity:.8}}
-.scene-ct{position:relative;z-index:10;display:flex;padding:16px;gap:16px;align-items:flex-start;flex-wrap:wrap;min-height:320px}
+/* ══ TYCOON SCENE ══ */
+.scene{position:relative;border-radius:16px;overflow:hidden;height:340px;background:linear-gradient(180deg,#040810,#081020 40%,#0c1830 70%,#101c38);border:1px solid var(--edge)}
+.scene canvas#tycoonCv{position:absolute;inset:0;width:100%;height:100%;z-index:1}
+/* coin particles overlay */
+.coin-layer{position:absolute;inset:0;z-index:2;pointer-events:none}
+.coin-layer canvas{width:100%;height:100%}
+/* quote bubble */
+.scene-quote{position:absolute;bottom:10px;left:10px;right:10px;z-index:10;background:rgba(6,10,24,.88);border:1px solid rgba(255,224,176,.1);border-radius:12px;padding:10px 14px;backdrop-filter:blur(10px)}
+.sq-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.sq-name{font-family:'Noto Serif KR';font-size:12px;color:var(--warm)}
+.sq-zone{font-size:10px;padding:2px 7px;border-radius:5px;font-weight:700}
+.sq-body{font-family:'Noto Serif KR';font-size:clamp(13px,2.5vw,16px);color:var(--txt);line-height:1.6}
+.sq-body em{color:var(--gold);font-style:normal;font-weight:700}
+.sq-stats{display:flex;gap:10px;margin-top:6px;font-size:11px;flex-wrap:wrap}
+.sq-stat{display:flex;align-items:center;gap:3px}.sq-sv{font-weight:700}
 
-/* CHAR */
-.char-card{width:155px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:6px}
-.char-frame{width:148px;background:var(--card);border:2px solid var(--gold3);border-radius:14px;padding:10px;text-align:center;backdrop-filter:blur(8px);position:relative;overflow:hidden}
-.char-frame::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
-.char-frame canvas{image-rendering:pixelated;width:80px;height:96px;display:block;margin:0 auto 6px}
-.char-nm{font-family:'Noto Serif KR';font-size:13px;color:var(--warm);font-weight:700}
-.char-title{font-size:10px;color:var(--dim);margin-bottom:8px}
-.cb{display:flex;align-items:center;gap:4px;margin-bottom:3px}
-.cb-icon{font-size:10px;width:14px;text-align:center}.cb-label{font-size:9px;color:var(--dim);width:22px}
-.cb-track{flex:1;height:5px;background:rgba(0,0,0,.3);border-radius:3px;overflow:hidden}
-.cb-fill{height:100%;border-radius:3px}.cb-val{font-size:8px;font-weight:700;width:20px;text-align:right}
-.lv-ring{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--gold3),var(--gold));display:flex;align-items:center;justify-content:center;border:2px solid var(--gold);box-shadow:0 0 10px rgba(232,200,96,.2);font-size:11px;font-weight:900;color:var(--sky)}
-.brazier-wrap{width:56px;height:34px;margin-top:2px}.brazier-wrap canvas{image-rendering:pixelated;width:100%;height:100%}
-
-/* TREASURY */
-.treasury{background:var(--card);border:1px solid var(--edge);border-radius:16px;padding:18px;flex:1;min-width:240px;backdrop-filter:blur(8px)}
-.tr-label{font-family:'Noto Serif KR';font-size:13px;color:var(--dim);margin-bottom:4px}
-.tr-amount{font-size:clamp(22px,4.5vw,32px);font-weight:900;color:var(--gold);margin-bottom:3px;text-shadow:0 0 10px rgba(232,200,96,.12)}
-.tr-sub{font-size:13px;color:var(--txt2);margin-bottom:10px}
-.tr-sub .up{color:var(--hp);font-weight:700}.tr-sub .dn{color:var(--dmg);font-weight:700}
-.gold-track{height:16px;background:rgba(0,0,0,.25);border-radius:8px;overflow:hidden;border:1px solid var(--edge);margin:6px 0}
-.gold-fill{height:100%;border-radius:8px;background:linear-gradient(90deg,#5a3808,#a08020,#ccaa30,#e8c860);transition:width 2s;position:relative}
-.gold-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.1),transparent 50%)}
-.xp-wrap{margin-top:8px}.xp-label{display:flex;justify-content:space-between;font-size:11px;color:var(--dim);margin-bottom:2px}
-.xp-track{height:10px;background:rgba(0,0,0,.25);border-radius:5px;overflow:hidden;border:1px solid var(--edge)}
-.xp-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,#886620,#bbaa30,#ddcc44);transition:width 2s}
-.tr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
-.tg{background:rgba(0,0,0,.15);border-radius:8px;padding:8px 6px;text-align:center;border:1px solid var(--edge)}
-.tg-v{font-size:15px;font-weight:900;margin-bottom:1px}.tg-l{font-size:10px;color:var(--dim)}
-
-/* SKILLS */
-.skills{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
-.skill{background:var(--card);border:1px solid var(--edge);border-radius:12px;padding:12px 8px;text-align:center;backdrop-filter:blur(8px);transition:all .3s}
+/* ══ SKILLS (compact tycoon style) ══ */
+.skills{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+.skill{background:var(--card);border:1px solid var(--edge);border-radius:10px;padding:8px 4px;text-align:center;backdrop-filter:blur(8px);transition:all .3s;position:relative;overflow:hidden}
 .skill:hover{border-color:var(--gold3);transform:translateY(-2px)}
-.skill-icon{font-size:22px;margin-bottom:3px}.skill-name{font-size:12px;font-weight:700;margin-bottom:2px}
-.skill-val{font-size:14px;font-weight:900;margin-bottom:2px}.skill-desc{font-size:10px;color:var(--dim)}
-.skill-bar{height:4px;background:rgba(0,0,0,.3);border-radius:2px;overflow:hidden;margin-top:5px}
+.skill-icon{font-size:18px;margin-bottom:1px}.skill-name{font-size:9px;font-weight:700;color:var(--txt2);margin-bottom:1px}
+.skill-val{font-size:12px;font-weight:900}
+.skill-bar{height:3px;background:rgba(0,0,0,.3);border-radius:2px;overflow:hidden;margin-top:3px}
 .skill-fill{height:100%;border-radius:2px}
 
-/* WEATHER */
-.wx-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.wx{border-radius:14px;padding:16px 10px;text-align:center;cursor:pointer;transition:all .4s;border:2px solid transparent;min-height:120px;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center}
+/* ══ WEATHER ══ */
+.wx-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.wx{border-radius:10px;padding:12px 6px;text-align:center;transition:all .4s;border:2px solid transparent;min-height:90px;position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .wx:hover{transform:translateY(-2px)}.wx.wa{transform:scale(1.02)}
-.wx-clear{background:linear-gradient(180deg,#0c1430,#081020)}.wx-clear.wa{border-color:var(--gold);box-shadow:0 0 20px rgba(232,200,96,.08)}
-.wx-bliz{background:linear-gradient(180deg,#101828,#0a1018)}.wx-bliz.wa{border-color:var(--frost);box-shadow:0 0 20px rgba(136,187,221,.08)}
-.wx-storm{background:linear-gradient(180deg,#0c0c18,#060610)}.wx-storm.wa{border-color:var(--dmg);box-shadow:0 0 20px rgba(204,102,85,.08)}
+.wx-clear{background:linear-gradient(180deg,#0c1430,#081020)}.wx-clear.wa{border-color:var(--gold);box-shadow:0 0 16px rgba(232,200,96,.05)}
+.wx-bliz{background:linear-gradient(180deg,#101828,#0a1018)}.wx-bliz.wa{border-color:var(--frost);box-shadow:0 0 16px rgba(136,187,221,.05)}
+.wx-storm{background:linear-gradient(180deg,#0c0c18,#060610)}.wx-storm.wa{border-color:var(--dmg);box-shadow:0 0 16px rgba(204,102,85,.05)}
 .wx canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.wx-ct{position:relative;z-index:2}.wx-ic{font-size:32px;margin-bottom:4px}
-.wx-nm{font-family:'Noto Serif KR';font-size:14px;font-weight:700;margin-bottom:3px}
-.wx-ds{font-size:11px;color:var(--dim);line-height:1.4}
-.wx-badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;margin-top:6px;display:inline-block}
+.wx-ct{position:relative;z-index:2}.wx-ic{font-size:26px;margin-bottom:2px}
+.wx-nm{font-family:'Noto Serif KR';font-size:12px;font-weight:700;margin-bottom:1px}
+.wx-ds{font-size:9px;color:var(--dim)}.wx-badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;margin-top:4px;display:inline-block}
 
-/* GOODS */
-.goods{display:flex;flex-direction:column;gap:8px}
-.good{background:var(--card);border:1px solid var(--edge);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;backdrop-filter:blur(8px);transition:all .3s;position:relative;overflow:hidden}
-.good:hover{border-color:rgba(232,200,96,.15)}
+/* ══ GOODS ══ */
+.goods{display:flex;flex-direction:column;gap:5px}
+.good{background:var(--card);border:1px solid var(--edge);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;backdrop-filter:blur(8px);transition:all .3s;position:relative;overflow:hidden}
+.good:hover{border-color:rgba(232,200,96,.1);background:rgba(16,22,48,.95)}
 .good::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
 .good-rare::before{background:var(--rare)}.good-epic::before{background:var(--epic)}.good-legend::before{background:var(--legend)}
-.good-icon{font-size:26px;flex-shrink:0;width:34px;text-align:center}
-.good-info{flex:1}
-.good-name{font-size:14px;font-weight:700;margin-bottom:2px;display:flex;align-items:center;gap:6px}
-.good-name .g-rank{font-size:10px;padding:1px 5px;border-radius:4px}
-.good-detail{font-size:12px;color:var(--txt2)}
-.good-bar-wrap{display:flex;align-items:center;gap:6px;margin-top:5px}
-.good-bar{flex:1;height:6px;background:rgba(0,0,0,.25);border-radius:3px;overflow:hidden}
-.good-fill{height:100%;border-radius:3px}
+.good-icon{font-size:20px;flex-shrink:0;width:26px;text-align:center}
+.good-info{flex:1}.good-name{font-size:12px;font-weight:700;margin-bottom:1px;display:flex;align-items:center;gap:4px}
+.good-name .g-rank{font-size:8px;padding:1px 3px;border-radius:2px}
+.good-detail{font-size:10px;color:var(--txt2)}
+.good-bar-wrap{display:flex;align-items:center;gap:4px;margin-top:3px}
+.good-bar{flex:1;height:4px;background:rgba(0,0,0,.25);border-radius:2px;overflow:hidden}
+.good-fill{height:100%;border-radius:2px}
 .gf-profit{background:linear-gradient(90deg,#448844,#66cc88)}.gf-wait{background:linear-gradient(90deg,#886620,#ccaa44)}.gf-loss{background:linear-gradient(90deg,#884444,#cc6655)}
-.good-days{font-size:10px;color:var(--dim);white-space:nowrap}
-.good-pnl{font-size:16px;font-weight:900;width:65px;text-align:right;flex-shrink:0}
+.good-days{font-size:8px;color:var(--dim)}.good-pnl{font-size:14px;font-weight:900;width:55px;text-align:right;flex-shrink:0}
 .good-pnl.win{color:var(--hp)}.good-pnl.lose{color:var(--dmg)}
 
-/* ORDERS */
-.ord-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.ord-col{background:var(--card);border:1px solid var(--edge);border-radius:14px;padding:14px;backdrop-filter:blur(8px)}
-.ord-col h3{font-size:13px;font-weight:700;margin-bottom:8px;text-align:center;padding:5px;border-radius:6px}
-.ord-col.buy-c h3{color:var(--mp);background:rgba(85,153,221,.06)}
-.ord-col.sell-c h3{color:var(--legend);background:rgba(221,170,68,.06)}
-.ord-row{display:flex;justify-content:space-between;padding:7px 10px;margin-bottom:3px;background:rgba(0,0,0,.12);border-radius:6px;border-left:3px solid;font-size:13px}
+/* ══ ORDERS ══ */
+.ord-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.ord-col{background:var(--card);border:1px solid var(--edge);border-radius:10px;padding:10px;backdrop-filter:blur(8px)}
+.ord-col h3{font-size:11px;font-weight:700;margin-bottom:6px;text-align:center;padding:4px;border-radius:4px}
+.ord-col.buy-c h3{color:var(--mp);background:rgba(85,153,221,.04)}
+.ord-col.sell-c h3{color:var(--legend);background:rgba(221,170,68,.04)}
+.ord-row{display:flex;justify-content:space-between;padding:5px 8px;margin-bottom:2px;background:rgba(0,0,0,.08);border-radius:4px;border-left:2px solid;font-size:11px}
 .buy-c .ord-row{border-color:var(--mp)}.sell-c .ord-row{border-color:var(--legend)}
+.ord-type{font-size:8px;color:var(--dim);margin-left:3px}
 
-/* CUSTOMERS */
-.cust-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
-.cust{background:var(--card);border:1px solid var(--edge);border-radius:14px;padding:14px;backdrop-filter:blur(8px);transition:all .3s;position:relative;overflow:hidden}
-.cust:hover{transform:translateY(-2px);border-color:rgba(232,200,96,.15)}
-.cust::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+/* ══ QUEUE ══ */
+.queue-wrap{background:var(--card);border:1px solid var(--edge);border-radius:12px;padding:12px;backdrop-filter:blur(8px);overflow-x:auto}
+.queue{display:flex;gap:6px;align-items:flex-end;min-height:80px}
+.q-person{text-align:center;flex-shrink:0;width:58px;animation:qw .7s ease-in-out infinite alternate;position:relative}
+.q-person:nth-child(odd){animation-delay:.15s}
+@keyframes qw{0%{transform:translateY(0)}100%{transform:translateY(-2px)}}
+.q-avatar{font-size:24px;margin-bottom:1px}.q-want{font-size:8px;color:var(--gold);font-weight:700;background:rgba(232,200,96,.06);padding:1px 3px;border-radius:2px;display:inline-block}
+.q-qty{font-size:8px;color:var(--dim)}.q-num{position:absolute;top:-5px;left:50%;transform:translateX(-50%);font-size:6px;font-weight:900;background:var(--gold);color:var(--sky);padding:0 3px;border-radius:2px}
+.q-stall{flex-shrink:0;width:36px;text-align:center;font-size:20px}
+
+/* ══ CUSTOMERS ══ */
+.cust-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.cust{background:var(--card);border:1px solid var(--edge);border-radius:10px;padding:10px 8px;backdrop-filter:blur(8px);transition:all .3s;position:relative;overflow:hidden;text-align:center}
+.cust:hover{transform:translateY(-2px);border-color:rgba(232,200,96,.1)}
+.cust::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
 .cust-s::before{background:var(--hp)}.cust-m::before{background:var(--mp)}.cust-l::before{background:var(--epic)}
-.cust-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.cust-avatar{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:24px;border:2px solid var(--edge);flex-shrink:0;position:relative}
-.cust-tier{position:absolute;top:-4px;right:-4px;font-size:8px;font-weight:900;background:var(--gold);color:var(--sky);padding:1px 4px;border-radius:3px}
-.cust-info{flex:1}.cust-name{font-size:13px;font-weight:700;margin-bottom:1px}
-.cust-rank{font-size:10px}.cust-rank .cr-stars{color:var(--gold)}
-.cust-div{height:1px;background:var(--edge);margin:6px 0}
-.cust-stats{display:grid;grid-template-columns:1fr 1fr;gap:4px}
-.cust-stat{display:flex;justify-content:space-between;font-size:12px}
-.cust-stat .cs-l{color:var(--dim)}.cust-stat .cs-v{font-weight:700}
-.cust-bar{height:4px;background:rgba(0,0,0,.25);border-radius:2px;overflow:hidden;margin-top:6px}
-.cust-fill{height:100%;border-radius:2px}
-.cust-quote{font-size:10px;color:var(--dim);font-style:italic;margin-top:6px;padding:4px 8px;background:rgba(0,0,0,.12);border-radius:6px}
+.cust-emoji{font-size:28px;margin-bottom:3px;display:block}
+.cust-nm{font-size:11px;font-weight:700;margin-bottom:1px}.cust-stars{font-size:8px;color:var(--gold);margin-bottom:3px;display:block}
+.cust-tier-badge{position:absolute;top:4px;right:4px;font-size:7px;font-weight:900;background:var(--gold);color:var(--sky);padding:0 3px;border-radius:2px}
+.cust-quote{font-size:8px;color:var(--dim);font-style:italic;line-height:1.3}
 
-/* DRINKS */
-.drink-wrap{background:var(--card);border:1px solid var(--edge);border-radius:16px;padding:18px;backdrop-filter:blur(8px)}
-.drink-progress{display:flex;align-items:center;margin-bottom:16px;gap:8px}
-.drink-bar{flex:1;height:12px;background:rgba(0,0,0,.25);border-radius:6px;overflow:hidden;border:1px solid var(--edge)}
-.drink-bar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,#88bbdd,#ddbb44,#cc6644);transition:width 2s}
-.drink-status{font-size:13px;font-weight:700;color:var(--gold)}
-.drinks{display:flex;gap:0;align-items:stretch}
-.drink{flex:1;text-align:center;padding:12px 6px;position:relative;transition:all .3s;border-radius:12px}
-.drink.unlocked{}.drink.locked{opacity:.3;filter:grayscale(.6)}
-.drink.current{background:rgba(232,200,96,.06);border:1px solid var(--gold3);box-shadow:0 0 15px rgba(232,200,96,.06)}
-.drink-icon{font-size:32px;margin-bottom:4px;display:block}
-.drink.current .drink-icon{animation:drinkB 2s ease-in-out infinite}
-@keyframes drinkB{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
-.drink-name{font-size:11px;font-weight:700;margin-bottom:2px}.drink-req{font-size:9px;color:var(--dim)}
-.drink-check{position:absolute;top:4px;right:4px;font-size:10px}
+/* ══ DRINKS ══ */
+.drink-wrap{background:var(--card);border:1px solid var(--edge);border-radius:12px;padding:12px;backdrop-filter:blur(8px)}
+.drink-progress{display:flex;align-items:center;margin-bottom:10px;gap:5px;font-size:11px}
+.drink-bar{flex:1;height:8px;background:rgba(0,0,0,.25);border-radius:4px;overflow:hidden;border:1px solid var(--edge)}
+.drink-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#88bbdd,#ddbb44,#cc6644);transition:width 2s}
+.drink-status{font-weight:700;color:var(--gold);font-size:10px}
+.drinks{display:flex;gap:0}.drink{flex:1;text-align:center;padding:6px 2px;position:relative;border-radius:8px;transition:all .3s}
+.drink.locked{opacity:.2;filter:grayscale(.6)}.drink.current{background:rgba(232,200,96,.04);border:1px solid var(--gold3)}
+.drink-icon{font-size:24px;display:block;margin-bottom:1px}.drink.current .drink-icon{animation:drB 2s ease-in-out infinite}
+@keyframes drB{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+.drink-name{font-size:8px;font-weight:700}.drink-req{font-size:7px;color:var(--dim)}
+.drink-check{position:absolute;top:2px;right:2px;font-size:7px}
 
-/* LOG */
-.ledger{background:var(--card);border:1px solid var(--edge);border-radius:14px;overflow:hidden;backdrop-filter:blur(8px)}
-.ledger-head{padding:10px 14px;border-bottom:1px solid var(--edge);display:flex;justify-content:space-between;align-items:center}
-.ledger-title{font-family:'Noto Serif KR';font-size:14px;color:var(--warm)}
-.ledger-btn{background:rgba(0,0,0,.2);border:1px solid var(--edge);color:var(--gold);padding:3px 8px;border-radius:6px;cursor:pointer;font-size:11px}
-.ledger-body{padding:10px 14px;max-height:220px;overflow-y:auto;font-size:13px;line-height:1.8}
-.ledger-body::-webkit-scrollbar{width:3px}.ledger-body::-webkit-scrollbar-thumb{background:var(--edge);border-radius:2px}
-.ll{opacity:0;animation:llin .4s ease forwards}@keyframes llin{to{opacity:1}}
-.ll-buy{color:var(--mp)}.ll-sell{color:var(--legend)}.ll-profit{color:var(--hp)}.ll-loss{color:var(--dmg)}.ll-weather{color:var(--frost)}.ll-sys{color:var(--warm)}.ll-dim{color:var(--dim)}.ll-drink{color:#cc8844}
+/* ══ CHAT ══ */
+.chat-wrap{background:var(--card);border:1px solid var(--edge);border-radius:12px;overflow:hidden;backdrop-filter:blur(8px)}
+.chat-head{padding:8px 10px;border-bottom:1px solid var(--edge);display:flex;justify-content:space-between;align-items:center}
+.chat-title{font-family:'Noto Serif KR';font-size:12px;color:var(--warm)}
+.chat-btn{background:rgba(0,0,0,.2);border:1px solid var(--edge);color:var(--gold);padding:2px 5px;border-radius:3px;cursor:pointer;font-size:9px}
+.chat-body{padding:8px 10px;max-height:240px;overflow-y:auto}
+.chat-body::-webkit-scrollbar{width:2px}.chat-body::-webkit-scrollbar-thumb{background:var(--edge);border-radius:2px}
+.msg{display:flex;gap:6px;margin-bottom:7px;opacity:0;animation:mi .4s ease forwards}@keyframes mi{to{opacity:1}}
+.msg-avatar{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;border:1px solid var(--edge);background:var(--card)}
+.msg-content{flex:1}.msg-name{font-size:7px;color:var(--dim);margin-bottom:1px}
+.msg-bubble{background:rgba(255,255,255,.03);border:1px solid var(--edge);border-radius:0 8px 8px 8px;padding:5px 8px;font-size:11px;line-height:1.5}
+.msg-buy .msg-bubble{border-color:rgba(85,153,221,.1);background:rgba(85,153,221,.02)}
+.msg-sell .msg-bubble{border-color:rgba(232,200,96,.1);background:rgba(232,200,96,.02)}
+.msg-profit .msg-bubble{border-color:rgba(102,204,136,.1);background:rgba(102,204,136,.02)}
+.msg-loss .msg-bubble{border-color:rgba(204,102,85,.1);background:rgba(204,102,85,.02)}
+.msg-sys .msg-bubble{background:rgba(255,224,176,.02);border-color:rgba(255,224,176,.06);text-align:center;font-size:9px;color:var(--warm)}
 
-.fab{position:fixed;bottom:20px;right:20px;z-index:50;width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--gold2),var(--gold));border:2px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;box-shadow:0 4px 16px rgba(200,160,60,.25);transition:all .3s}
+.fab{position:fixed;bottom:14px;right:14px;z-index:50;width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--gold2),var(--gold));border:2px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;box-shadow:0 3px 10px rgba(200,160,60,.2);transition:all .3s}
 .fab:hover{transform:scale(1.1)}
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
-.modal-bg.open{display:flex}
-.modal{background:var(--sky2);border:1px solid var(--edge);border-radius:18px;padding:24px;width:90%;max-width:360px;position:relative}
-.modal h2{font-family:'Noto Serif KR';font-size:17px;color:var(--warm);text-align:center;margin-bottom:18px}
-.modal-close{position:absolute;top:10px;right:14px;background:none;border:none;color:var(--dim);font-size:16px;cursor:pointer}
-.m-tabs{display:flex;gap:0;margin-bottom:16px}
-.m-tab{flex:1;padding:9px;text-align:center;cursor:pointer;font-size:13px;font-weight:700;border:1px solid var(--edge);transition:all .3s}
-.m-tab:first-child{border-radius:8px 0 0 8px}.m-tab:last-child{border-radius:0 8px 8px 0}
-.m-tab.t-buy.on{background:var(--mp);color:#fff;border-color:var(--mp)}
-.m-tab.t-sell.on{background:var(--legend);color:#fff;border-color:var(--legend)}
-.m-field{margin-bottom:12px}.m-field label{display:block;font-size:12px;color:var(--dim);margin-bottom:3px}
-.m-field input{width:100%;padding:11px;background:rgba(0,0,0,.2);border:1px solid var(--edge);border-radius:8px;color:var(--txt);font-size:15px;outline:none}
-.m-submit{width:100%;padding:13px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(4px)}.modal-bg.open{display:flex}
+.modal{background:var(--sky2);border:1px solid var(--edge);border-radius:14px;padding:20px;width:90%;max-width:330px;position:relative}
+.modal h2{font-family:'Noto Serif KR';font-size:14px;color:var(--warm);text-align:center;margin-bottom:12px}
+.modal-close{position:absolute;top:8px;right:10px;background:none;border:none;color:var(--dim);font-size:14px;cursor:pointer}
+.m-tabs{display:flex;gap:0;margin-bottom:10px}.m-tab{flex:1;padding:7px;text-align:center;cursor:pointer;font-size:11px;font-weight:700;border:1px solid var(--edge);transition:all .3s}
+.m-tab:first-child{border-radius:6px 0 0 6px}.m-tab:last-child{border-radius:0 6px 6px 0}
+.m-tab.t-buy.on{background:var(--mp);color:#fff;border-color:var(--mp)}.m-tab.t-sell.on{background:var(--legend);color:#fff;border-color:var(--legend)}
+.m-field{margin-bottom:8px}.m-field label{display:block;font-size:10px;color:var(--dim);margin-bottom:2px}
+.m-field input{width:100%;padding:9px;background:rgba(0,0,0,.2);border:1px solid var(--edge);border-radius:6px;color:var(--txt);font-size:13px;outline:none}
+.m-submit{width:100%;padding:10px;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;margin-top:2px}
 .m-submit.buy-btn{background:var(--mp);color:#fff}.m-submit.sell-btn{background:var(--legend);color:#fff}
-.m-msg{text-align:center;margin-top:8px;font-size:12px;padding:6px;border-radius:6px}
-.m-msg.ok{background:rgba(102,204,136,.08);color:var(--hp)}.m-msg.err{background:rgba(204,102,85,.08);color:var(--dmg)}
-footer{text-align:center;padding:18px;color:var(--dim);font-size:10px;border-top:1px solid var(--edge);margin-top:24px}
-@media(max-width:640px){.scene-ct{flex-direction:column;align-items:center}.char-card{width:140px}.ord-grid{grid-template-columns:1fr}.wx-grid{grid-template-columns:1fr}.cust-grid{grid-template-columns:1fr}.drinks{flex-wrap:wrap}.skills{grid-template-columns:repeat(3,1fr)}}
+.m-msg{text-align:center;margin-top:5px;font-size:10px;padding:4px;border-radius:4px}
+.m-msg.ok{background:rgba(102,204,136,.06);color:var(--hp)}.m-msg.err{background:rgba(204,102,85,.06);color:var(--dmg)}
+footer{text-align:center;padding:12px;color:var(--dim);font-size:8px;border-top:1px solid var(--edge);margin-top:16px}
+@media(max-width:640px){.ord-grid{grid-template-columns:1fr}.wx-grid{grid-template-columns:1fr}.cust-grid{grid-template-columns:repeat(4,1fr)}.drinks{flex-wrap:wrap}.skills{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:400px){.cust-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
 <div class="sky-layer"><canvas id="skyCv"></canvas></div>
 <div class="snow-layer"><canvas id="snowCv"></canvas></div>
 <div class="content">
-<div class="header">
-  <h1>❄ 상인 키우기 ❄</h1>
-  <div class="h-sub">퀀트로 장사하기</div>
-  <div class="hud" id="hud"></div>
-</div>
+<div class="t-hud" id="tHud"><span class="t-hud-title">❄상인 키우기 타이쿤</span></div>
 <div class="wrap">
-  <div class="refresh" id="refreshBar">마지막 갱신: --<button onclick="loadAll()">🔄 새로고침</button></div>
-  <div class="scene"><canvas class="sbg" id="sceneCv"></canvas><div class="scene-glow"></div><div class="scene-ground"></div><div class="scene-ct" id="sceneCt"><div class="loading"><span class="spinner">❄</span>상인의 데이터를 불러오는 중...</div></div></div>
-  <div class="sec"><div class="sec-l"></div><span class="sec-t">⚔ 상인의 능력</span><div class="sec-l"></div></div>
-  <div class="skills" id="skills"></div>
-  <div class="sec"><div class="sec-l"></div><span class="sec-t">🌨 오늘 밤 날씨</span><div class="sec-l"></div></div>
-  <div class="wx-grid" id="wxGrid"></div>
-  <div class="sec"><div class="sec-l"></div><span class="sec-t">📦 진열된 상품</span><div class="sec-l"></div></div>
-  <div class="goods" id="goods"><div class="loading"><span class="spinner">📦</span></div></div>
-  <div class="sec"><div class="sec-l"></div><span class="sec-t">📋 매입·판매 예정</span><div class="sec-l"></div></div>
-  <div class="ord-grid" id="orders"><div class="loading"><span class="spinner">📋</span></div></div>
-  <div class="sec"><div class="sec-l"></div><span class="sec-t">🧑‍🤝‍🧑 단골 손님</span><div class="sec-l"></div></div>
-  <div class="cust-grid" id="custGrid"></div>
-  <div class="sec"><div class="sec-l"></div><span class="sec-t">☕ 따뜻한 음료 컬렉션</span><div class="sec-l"></div></div>
-  <div class="drink-wrap" id="drinkWrap"></div>
-  <div class="sec"><div class="sec-l"></div><span class="sec-t">📜 상인의 장부</span><div class="sec-l"></div></div>
-  <div class="ledger"><div class="ledger-head"><span class="ledger-title">거래 기록</span><button class="ledger-btn" onclick="loadAll()">🔄</button></div><div class="ledger-body" id="logEl"></div></div>
+  <div class="refresh" id="refreshBar">--<button onclick="loadAll()">🔄</button></div>
+  <div class="scene"><canvas id="tycoonCv"></canvas><div class="coin-layer"><canvas id="coinCv"></canvas></div><div class="scene-quote" id="sceneQuote"></div></div>
+  <div class="sec"><div class="sec-l"></div><span class="sec-t">⚔ 능력</span><div class="sec-l"></div></div><div class="skills" id="skills"></div>
+  <div class="sec"><div class="sec-l"></div><span class="sec-t">🌨 날씨</span><div class="sec-l"></div></div><div class="wx-grid" id="wxGrid"></div>
+  <div class="sec"><div class="sec-l"></div><span class="sec-t">📦 진열 상품</span><div class="sec-l"></div></div><div class="goods" id="goods"></div>
+  <div class="sec"><div class="sec-l"></div><span class="sec-t">📋 주문표 (퉁치기)</span><div class="sec-l"></div></div><div class="ord-grid" id="orders"></div>
+  <div class="sec"><div class="sec-l"></div><span class="sec-t">🧍 손님 대기줄</span><div class="sec-l"></div></div><div class="queue-wrap" id="queueWrap"></div>
+  <div class="sec"><div class="sec-l"></div><span class="sec-t">🧑‍🤝‍🧑 단골손님</span><div class="sec-l"></div></div><div class="cust-grid" id="custGrid"></div>
+  <div class="sec"><div class="sec-l"></div><span class="sec-t">☕ 음료</span><div class="sec-l"></div></div><div class="drink-wrap" id="drinkWrap"></div>
+  <div class="sec"><div class="sec-l"></div><span class="sec-t">🔥 모닥불 채팅</span><div class="sec-l"></div></div>
+  <div class="chat-wrap"><div class="chat-head"><span class="chat-title">화로 옆 이야기</span><button class="chat-btn" onclick="loadAll()">🔄</button></div><div class="chat-body" id="chatBody"></div></div>
 </div>
 <div class="fab" onclick="openModal()">💰</div>
-<div class="modal-bg" id="modalBg" onclick="if(event.target===this)closeModal()">
-  <div class="modal"><button class="modal-close" onclick="closeModal()">✕</button>
-    <h2>💰 매입 / 판매</h2>
-    <div class="m-tabs"><div class="m-tab t-buy on" onclick="setTT('buy')">매입 (매수)</div><div class="m-tab t-sell" onclick="setTT('sell')">판매 (매도)</div></div>
-    <div class="m-field"><label>가격 ($)</label><input type="number" id="tPrice" step="0.01" placeholder="54.59"></div>
-    <div class="m-field"><label>수량</label><input type="number" id="tQty" step="1" placeholder="67"></div>
-    <button class="m-submit buy-btn" id="tSubmit" onclick="submitT()">매입 기록</button>
-    <div id="tMsg"></div>
-  </div>
+<div class="modal-bg" id="modalBg" onclick="if(event.target===this)closeModal()"><div class="modal"><button class="modal-close" onclick="closeModal()">✕</button><h2>💰 매입 / 판매</h2><div class="m-tabs"><div class="m-tab t-buy on" onclick="setTT('buy')">매입</div><div class="m-tab t-sell" onclick="setTT('sell')">판매</div></div><div class="m-field"><label>가격 ($)</label><input type="number" id="tPrice" step="0.01"></div><div class="m-field"><label>수량</label><input type="number" id="tQty" step="1"></div><button class="m-submit buy-btn" id="tSubmit" onclick="submitT()">매입 기록</button><div id="tMsg"></div></div></div>
+<footer>⚠ 과거 성과가 미래를 보장하지 않습니다 · v6.2</footer>
 </div>
-<footer>⚠ 돈이 너무 많이 벌릴 수 있습니다.<br><span style="font-size:9px;color:var(--dim)">상인 키우기 v3.0</span></footer>
-</div>
-
 <script>
-// ═══════════════════════════════════════
-// ⚠️ 아래 URL을 본인의 Apps Script URL로 교체하세요!
-// ═══════════════════════════════════════
-var API_URL = 'https://script.google.com/macros/s/AKfycbzcnC0z7N2iCLOf1egqJtbb9YGL4NVM5EzbcWyL-DWt8H5y1TTigh73gEnYTSORsnKJ/exec';
-// ═══════════════════════════════════════
-
+var API_URL='https://script.google.com/macros/s/AKfycbzcnC0z7N2iCLOf1egqJtbb9YGL4NVM5EzbcWyL-DWt8H5y1TTigh73gEnYTSORsnKJ/exec';
 var dashData=null,ordData=null,tradeType='buy';
-
-// ══ JSONP (CORS 우회) ══
-function fetchAPI(action){return new Promise(function(resolve){
-  var cb='jsonp_'+Date.now()+'_'+Math.floor(Math.random()*10000);
-  var to=setTimeout(function(){window[cb]=function(){};resolve(null)},15000);
-  window[cb]=function(data){clearTimeout(to);resolve(data);delete window[cb];var el=document.getElementById(cb);if(el)el.remove()};
-  var s=document.createElement('script');s.id=cb;s.src=API_URL+'?action='+action+'&callback='+cb;
-  s.onerror=function(){clearTimeout(to);resolve(null);delete window[cb];s.remove()};
-  document.head.appendChild(s)})}
+function fetchAPI(a){return new Promise(function(res){if(API_URL==='YOUR_APPS_SCRIPT_URL_HERE'){res(null);return}var cb='jp_'+Date.now()+'_'+Math.floor(Math.random()*1e4);var to=setTimeout(function(){window[cb]=function(){};res(null)},15000);window[cb]=function(d){clearTimeout(to);res(d);delete window[cb];var e=document.getElementById(cb);if(e)e.remove()};var s=document.createElement('script');s.id=cb;s.src=API_URL+'?action='+a+'&callback='+cb;s.onerror=function(){clearTimeout(to);res(null);delete window[cb];s.remove()};document.head.appendChild(s)})}
 
 // ══ STARS ══
 !function(){var cv=document.getElementById('skyCv'),c=cv.getContext('2d');function r(){cv.width=innerWidth*2;cv.height=innerHeight*2}r();addEventListener('resize',r);var s=[];for(var i=0;i<130;i++)s.push({x:Math.random()*4000,y:Math.random()*4000,r:Math.random()*1.3+.2,a:Math.random(),sp:Math.random()*.003+.001});!function d(){c.clearRect(0,0,cv.width,cv.height);s.forEach(function(p){p.a+=p.sp;c.fillStyle='rgba(200,215,240,'+(0.12+0.45*Math.abs(Math.sin(p.a)))+')';c.beginPath();c.arc(p.x,p.y,p.r,0,Math.PI*2);c.fill()});requestAnimationFrame(d)}()}();
 // ══ SNOW ══
-!function(){var cv=document.getElementById('snowCv'),c=cv.getContext('2d');function r(){cv.width=innerWidth*2;cv.height=innerHeight*2}r();addEventListener('resize',r);var f=[];for(var i=0;i<80;i++)f.push({x:Math.random()*4000,y:Math.random()*4000,r:Math.random()*2.5+.5,vy:Math.random()*1.5+.5,vx:Math.random()*.6-.3,a:Math.random()});!function d(){c.clearRect(0,0,cv.width,cv.height);f.forEach(function(p){p.y+=p.vy;p.x+=p.vx+Math.sin(p.a+=.01)*.3;if(p.y>cv.height){p.y=-10;p.x=Math.random()*cv.width}if(p.x<0)p.x=cv.width;if(p.x>cv.width)p.x=0;c.fillStyle='rgba(220,230,245,'+(0.12+p.r*0.1)+')';c.beginPath();c.arc(p.x,p.y,p.r,0,Math.PI*2);c.fill()});requestAnimationFrame(d)}()}();
-// ══ SCENE BG ══
-!function(){var cv=document.getElementById('sceneCv');cv.width=920;cv.height=340;var c=cv.getContext('2d');
-c.fillStyle='rgba(230,235,250,.85)';c.beginPath();c.arc(770,48,20,0,Math.PI*2);c.fill();
-c.fillStyle='rgba(230,235,250,.05)';c.beginPath();c.arc(770,48,45,0,Math.PI*2);c.fill();
-c.fillStyle='#141e28';[[100,130,38],[160,110,28],[710,140,32],[790,115,25],[840,130,30],[50,150,22]].forEach(function(a){c.beginPath();c.moveTo(a[0],a[1]+a[2]);c.lineTo(a[0]+a[2]*.5,a[1]);c.lineTo(a[0]+a[2],a[1]+a[2]);c.fill()});
-c.fillStyle='#1a2830';[[30,170,45],[880,160,40],[830,180,30]].forEach(function(a){c.beginPath();c.moveTo(a[0],a[1]+a[2]);c.lineTo(a[0]+a[2]*.5,a[1]);c.lineTo(a[0]+a[2],a[1]+a[2]);c.fill()});
-c.fillStyle='#3a2818';c.fillRect(310,148,300,10);c.fillRect(300,144,320,5);c.fillStyle='#4a3420';c.fillRect(305,141,310,4);
-c.fillStyle='rgba(210,220,240,.15)';c.fillRect(302,138,314,5);
-c.fillStyle='#3a2818';c.fillRect(318,155,6,110);c.fillRect(596,155,6,110);
-c.fillStyle='#2a1c10';c.fillRect(328,200,250,6);c.fillRect(328,235,250,6);
-var cl=['#ddaa44','#88aadd','#cc7788','#77bb88','#aa88cc'];for(var i=0;i<5;i++){c.fillStyle=cl[i];c.fillRect(338+i*48,188,28,12);c.fillRect(338+i*48,224,28,11)}
-[[312,140],[598,140]].forEach(function(a){c.fillStyle='rgba(255,153,68,.5)';c.fillRect(a[0]-3,a[1]+8,8,12);c.fillStyle='rgba(255,153,68,.06)';c.beginPath();c.arc(a[0]+1,a[1]+18,22,0,Math.PI*2);c.fill();c.fillStyle='#5a4020';c.fillRect(a[0],a[1],3,8)})}();
+!function(){var cv=document.getElementById('snowCv'),c=cv.getContext('2d');function r(){cv.width=innerWidth*2;cv.height=innerHeight*2}r();addEventListener('resize',r);var f=[];for(var i=0;i<80;i++)f.push({x:Math.random()*4000,y:Math.random()*4000,r:Math.random()*2.5+.5,vy:Math.random()*1.5+.5,vx:Math.random()*.6-.3,a:Math.random()});!function d(){c.clearRect(0,0,cv.width,cv.height);f.forEach(function(p){p.y+=p.vy;p.x+=p.vx+Math.sin(p.a+=.01)*.3;if(p.y>cv.height){p.y=-10;p.x=Math.random()*cv.width}if(p.x<0)p.x=cv.width;if(p.x>cv.width)p.x=0;c.fillStyle='rgba(220,230,245,'+(0.1+p.r*0.08)+')';c.beginPath();c.arc(p.x,p.y,p.r,0,Math.PI*2);c.fill()});requestAnimationFrame(d)}()}();
 
-function drawM(cv){cv.width=20;cv.height=24;var c=cv.getContext('2d');c.imageSmoothingEnabled=false;
-[{x:7,y:0,w:6,h:2,c:'#5a4030'},{x:6,y:2,w:8,h:1,c:'#6a4838'},{x:6,y:3,w:8,h:1,c:'#c0b8a8'},{x:7,y:4,w:6,h:4,c:'#e0c098'},{x:8,y:5,w:2,h:1,c:'#554433'},{x:11,y:5,w:2,h:1,c:'#554433'},{x:9,y:7,w:2,h:1,c:'#cc9977'},{x:6,y:8,w:8,h:2,c:'#cc4444'},{x:5,y:9,w:3,h:3,c:'#cc4444'},{x:5,y:10,w:10,h:7,c:'#334466'},{x:6,y:11,w:8,h:5,c:'#3a5070'},{x:5,y:10,w:10,h:1,c:'#c0b8a8'},{x:5,y:16,w:10,h:1,c:'#c0b8a8'},{x:6,y:14,w:8,h:1,c:'#5a4030'},{x:9,y:14,w:2,h:1,c:'#ddaa44'},{x:3,y:11,w:2,h:5,c:'#334466'},{x:15,y:11,w:2,h:5,c:'#334466'},{x:3,y:16,w:2,h:2,c:'#cc4444'},{x:15,y:16,w:2,h:2,c:'#cc4444'},{x:6,y:17,w:3,h:4,c:'#222838'},{x:11,y:17,w:3,h:4,c:'#222838'},{x:6,y:20,w:3,h:2,c:'#3a2818'},{x:11,y:20,w:3,h:2,c:'#3a2818'},{x:15,y:10,w:4,h:5,c:'#5a4030'},{x:15,y:11,w:4,h:3,c:'#6a4838'},{x:16,y:12,w:2,h:1,c:'#ddaa44'},{x:14,y:6,w:1,h:1,c:'rgba(200,220,240,.25)'}].forEach(function(p){c.fillStyle=p.c;c.fillRect(p.x,p.y,p.w,p.h)})}
+// ══ COIN PARTICLES ══
+!function(){var cv=document.getElementById('coinCv'),c=cv.getContext('2d');function r(){cv.width=cv.offsetWidth*2;cv.height=cv.offsetHeight*2}r();addEventListener('resize',r);var coins=[];
+window.spawnCoins=function(n){for(var i=0;i<n;i++)coins.push({x:cv.width*.4+Math.random()*cv.width*.2,y:cv.height*.5,vx:(Math.random()-.5)*6,vy:-Math.random()*8-4,r:Math.random()*3+2,life:1,g:.15})};
+!function d(){c.clearRect(0,0,cv.width,cv.height);coins=coins.filter(function(p){p.x+=p.vx;p.y+=p.vy;p.vy+=p.g;p.life-=.012;if(p.life<=0)return false;c.fillStyle='rgba(232,200,96,'+p.life+')';c.beginPath();c.arc(p.x,p.y,p.r,0,Math.PI*2);c.fill();c.fillStyle='rgba(255,240,180,'+p.life*.5+')';c.beginPath();c.arc(p.x,p.y,p.r*.5,0,Math.PI*2);c.fill();return true});requestAnimationFrame(d)}()}();
 
-var brA;
-function drawBr(cv){cv.width=60;cv.height=36;var c=cv.getContext('2d');c.imageSmoothingEnabled=false;var t=performance.now()*.001,fk=Math.sin(t*3)*.5+.5;
-c.fillStyle='#444';c.fillRect(15,22,30,8);c.fillStyle='#555';c.fillRect(18,20,24,4);c.fillStyle='#333';c.fillRect(18,30,4,6);c.fillRect(38,30,4,6);
-c.fillStyle='#ff6622';c.fillRect(22,Math.floor(14-fk),16,Math.floor(8+fk));c.fillStyle='#ff9933';c.fillRect(24,Math.floor(10-fk*.5),12,Math.floor(8+fk*.5));c.fillStyle='#ffcc44';c.fillRect(26,Math.floor(8-fk*.3),8,6);c.fillStyle='#ffdd66';c.fillRect(28,Math.floor(6-fk*.2),4,4)}
-function animBr(){var cv=document.getElementById('brCv');if(cv)drawBr(cv);brA=requestAnimationFrame(animBr)}
+// ══ TYCOON SCENE ══
+!function(){
+  var cv=document.getElementById('tycoonCv'),c=cv.getContext('2d');
+  var W,H,sc;function resize(){W=cv.offsetWidth;H=cv.offsetHeight;cv.width=W*2;cv.height=H*2;sc=W/460}resize();addEventListener('resize',resize);
+  var GY=90; // ground Y — everyone stands here
+  var npcs=[];for(var i=0;i<3;i++){npcs.push({x:-30-i*80,y:GY,targetX:200+Math.random()*60,speed:.5+Math.random()*.3,state:'walk',wait:0,dir:1,col:['#cc4444','#4488aa','#44aa66'][i],hat:['#5a4030','#444466','#665544'][i]})}
+  var mx=180,mtarget=180,mstate='idle',mwait=0,mdir=1;
+  var targets=[140,175,220,255];
+  var smokes=[];for(var i=0;i<8;i++)smokes.push({x:95+Math.random()*10,y:68,vy:-.2-Math.random()*.3,r:2+Math.random()*3,a:.08+Math.random()*.06,life:Math.random()*100});
 
-function initWxP(){document.querySelectorAll('.wx canvas').forEach(function(cv){var ctx=cv.getContext('2d'),t=cv.dataset.t;cv.width=cv.offsetWidth*2;cv.height=cv.offsetHeight*2;var W=cv.width,H=cv.height,ps=[];for(var i=0;i<18;i++)ps.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*2+.5,vy:t==='storm'?Math.random()*2+1:Math.random()+.3,vx:t==='storm'?(Math.random()-.3)*2:Math.random()*.3-.15,a:Math.random()});!function d(){ctx.clearRect(0,0,W,H);ps.forEach(function(p){p.y+=p.vy;p.x+=p.vx;p.a+=.01;if(p.y>H){p.y=-5;p.x=Math.random()*W}if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(t==='clear'){ctx.fillStyle='rgba(230,220,180,'+(0.06+0.06*Math.sin(p.a))+')';ctx.beginPath();ctx.arc(p.x,p.y,p.r*.7,0,Math.PI*2);ctx.fill()}else{ctx.fillStyle='rgba(200,220,240,'+(0.1+p.r*0.04)+')';ctx.beginPath();ctx.arc(p.x,p.y,p.r*(t==='storm'?1.3:1),0,Math.PI*2);ctx.fill()}});requestAnimationFrame(d)}()})}
+  function px(x,y,w,h,col){c.fillStyle=col;c.fillRect(x*sc*2,y*sc*2,w*sc*2,h*sc*2)}
 
-// ══ CUSTOMERS DATA ══
-var CUSTS=[
-  {t:1,e:'🧑‍🌾',nm:'마을 농부',g:'소',별:'★',bg:'#182818',대사:'"싼 물건 있으면 알려주게나"'},
-  {t:2,e:'🧑‍🔧',nm:'떠돌이 장인',g:'소',별:'★★',bg:'#1a2820',대사:'"좋은 재료가 있으면 사겠소"'},
-  {t:3,e:'🧑‍💼',nm:'도시 상인',g:'중',별:'★★★',bg:'#182840',대사:'"흥정은 내가 좀 합니다"'},
-  {t:4,e:'🎖',nm:'퇴역 기사',g:'중',별:'★★★',bg:'#1a2850',대사:'"좋은 무기를 찾고 있소"'},
-  {t:5,e:'🧙',nm:'마법사',g:'중',별:'★★★★',bg:'#201840',대사:'"희귀한 물건에만 관심있지"'},
-  {t:6,e:'👸',nm:'귀족 영애',g:'대',별:'★★★★',bg:'#281838',대사:'"최고급만 보여주세요"'},
-  {t:7,e:'🤴',nm:'왕자',g:'대',별:'★★★★★',bg:'#301838',대사:'"이 나라 최고의 보물을 원한다"'},
-  {t:8,e:'👑',nm:'여왕 폐하',g:'대',별:'★★★★★',bg:'#381830',대사:'"짐의 눈에 드는 것만 가져오너라"'}];
+  // NPC: villagers with variety (scale 2.5)
+  function drawNPC(nx,ny,frame,dir,col,hat){
+    var s=2.5,b=Math.sin(frame*.12)*.6;
+    // shadow
+    c.fillStyle='rgba(0,0,0,.06)';c.beginPath();c.ellipse((nx+3*s)*sc*2,(ny+1)*sc*2,3*s*sc*2,1*s*sc*2*.4,0,0,Math.PI*2);c.fill();
+    px(nx+1*s,ny-7*s+b,4*s,2*s,hat);
+    px(nx+2*s,ny-6*s+b,2*s,2*s,'#e8c8a0');
+    px(nx+2.5*s,ny-5.2*s+b,.6*s,.5*s,'#443322'); // eye L
+    px(nx+3.5*s,ny-5.2*s+b,.6*s,.5*s,'#443322'); // eye R
+    px(nx+1*s,ny-4*s+b,4*s,3.5*s,col);
+    var lo=Math.sin(frame*.2)*1;
+    px(nx+1*s,ny-.5*s+lo,2*s,2*s,'#333844');
+    px(nx+3*s,ny-.5*s-lo,2*s,2*s,'#333844');
+    px(nx+1*s,ny+1.3*s+lo,2*s,.7*s,'#2a1c10');  // shoe L
+    px(nx+3*s,ny+1.3*s-lo,2*s,.7*s,'#2a1c10');  // shoe R
+  }
 
+  // MERCHANT: young male trader — hood, tunic, apron, satchel
+  function drawMerchant2(bx,by,frame,dir){
+    var s=2.5,b=Math.sin(frame*.1)*.6;
+    // shadow
+    c.fillStyle='rgba(0,0,0,.08)';c.beginPath();c.ellipse((bx+3*s)*sc*2,(by+1.5)*sc*2,4*s*sc*2,1*s*sc*2*.4,0,0,Math.PI*2);c.fill();
+    // hood (dark green, pointed)
+    px(bx+.5*s,by-9*s+b,5*s,1*s,'#1a3020');
+    px(bx+1*s,by-8*s+b,4*s,2*s,'#1a3020');
+    px(bx+2.5*s,by-10*s+b,1*s,1*s,'#1a3020'); // hood tip
+    // face
+    px(bx+1.5*s,by-6*s+b,3*s,2.5*s,'#e8c8a0');
+    // eyes (bright, friendly)
+    px(bx+2*s,by-5.2*s+b,.7*s,.6*s,'#223344');
+    px(bx+3.5*s,by-5.2*s+b,.7*s,.6*s,'#223344');
+    // eyebrow
+    px(bx+1.8*s,by-5.8*s+b,1*s,.3*s,'#443322');
+    px(bx+3.3*s,by-5.8*s+b,1*s,.3*s,'#443322');
+    // mouth (grin)
+    px(bx+2.2*s,by-3.8*s+b,1.5*s,.4*s,'#bb8866');
+    // tunic (forest green)
+    px(bx+.5*s,by-3.5*s+b,5*s,4.5*s,'#2a5030');
+    // tunic collar (lighter)
+    px(bx+1.5*s,by-3.5*s+b,3*s,.8*s,'#3a6840');
+    // tunic center line
+    px(bx+2.8*s,by-3*s+b,.4*s,3.5*s,'#1a3820');
+    // apron (cream/tan — merchant identity!)
+    px(bx+1.2*s,by-1*s+b,3.5*s,2.5*s,'#d4c4a0');
+    px(bx+1.5*s,by-.5*s+b,3*s,.3*s,'#baa880'); // apron fold line
+    // belt (leather + gold coin pouch)
+    px(bx+.5*s,by+1*s+b,5*s,.7*s,'#4a2810');
+    px(bx+1*s,by+.8*s+b,1.2*s,1.2*s,'#ddaa44'); // coin pouch!
+    px(bx+1.3*s,by+1*s+b,.6*s,.6*s,'#aa8030'); // pouch detail
+    // arms
+    var ao=mstate==='walk'?Math.sin(frame*.18)*1.5:0;
+    px(bx-.2*s,by+(-2.5+ao)*s+b,1*s,3.5*s,'#2a5030');
+    px(bx+5.2*s,by+(-2.5-ao)*s+b,1*s,3.5*s,'#2a5030');
+    // hands
+    if(mstate==='serve'){
+      // reaching out with item
+      px(bx+5.5*s,by-3.5*s+b,1.5*s,1*s,'#e8c8a0');
+      px(bx+6.5*s,by-4*s+b,1.5*s,1.5*s,'#ddaa44'); // holding gold item
+      c.fillStyle='rgba(232,200,96,.08)';c.beginPath();c.arc((bx+7*s)*sc*2,(by-3.5*s+b)*sc*2,4*sc,0,Math.PI*2);c.fill();
+    } else {
+      px(bx-.2*s,by+(1+ao)*s+b,1*s,.8*s,'#e8c8a0');
+      px(bx+5.2*s,by+(1-ao)*s+b,1*s,.8*s,'#e8c8a0');
+    }
+    // pants (dark)
+    var lo=mstate==='walk'?Math.sin(frame*.2)*1.2:0;
+    px(bx+1*s,by+(1.8+lo)*s,2*s,2.5*s,'#1a1828');
+    px(bx+3*s,by+(1.8-lo)*s,2*s,2.5*s,'#1a1828');
+    // boots (sturdy traveler boots)
+    px(bx+.5*s,by+(4+lo)*s,2.5*s,1.2*s,'#3a2010');
+    px(bx+3*s,by+(4-lo)*s,2.5*s,1.2*s,'#3a2010');
+    // backpack/satchel
+    var bpx=dir>0?5:-1.5;
+    px(bx+bpx*s,by-3*s+b,2*s,4*s,'#5a3818');
+    px(bx+bpx*s,by-3*s+b,2*s,.6*s,'#7a5028'); // flap
+    px(bx+(bpx+.5)*s,by-2*s+b,1*s,.6*s,'#ddaa44'); // buckle
+    // cape flowing behind (only when walking)
+    if(mstate==='walk'){
+      var cf=Math.sin(frame*.12)*1.5;
+      var cpx=dir>0?-1.5:5.5;
+      px(bx+cpx*s,by-3*s+b+cf,1.2*s,4.5*s,'#1a3828');
+      px(bx+cpx*s,by+1*s+b+cf*1.3,1.5*s,1*s,'#1a3828'); // cape tail
+    }
+    // breath
+    if(Math.sin(frame*.04)>.8){
+      c.fillStyle='rgba(200,220,240,.12)';
+      c.beginPath();c.arc((bx+(dir>0?6:0)*s)*sc*2,(by-4.5*s+b)*sc*2,1.5*sc,0,Math.PI*2);c.fill();
+    }
+  }
+
+  function drawBrazier2(bx,by,frame){
+    var s=2.5,fk=Math.sin(frame*.05)*.5+.5;
+    // base
+    px(bx,by+10*s,8*s,2*s,'#555');px(bx+.5*s,by+8.5*s,7*s,1.5*s,'#666');
+    // legs
+    px(bx+.5*s,by+12*s,1.5*s,2.5*s,'#444');px(bx+6*s,by+12*s,1.5*s,2.5*s,'#444');
+    // embers glow on ground
+    c.fillStyle='rgba(255,100,30,.03)';c.beginPath();c.ellipse((bx+4*s)*sc*2,(by+14*s)*sc*2,6*s*sc*2,1.5*s*sc*2*.3,0,0,Math.PI*2);c.fill();
+    // fire layers
+    px(bx+1.5*s,by+(5-fk*2)*s,5*s,(4+fk*2)*s,'#cc3300');
+    px(bx+2*s,by+(3.5-fk)*s,4*s,(3+fk)*s,'#ff6622');
+    px(bx+2.5*s,by+(2-fk*.5)*s,3*s,2.5*s,'#ff9933');
+    px(bx+3*s,by+(1-fk*.3)*s,2*s,1.5*s,'#ffcc44');
+    px(bx+3.3*s,by+(.3-fk*.2)*s,1.3*s,1*s,'#ffee88');
+    // sparks
+    if(frame%30<5){px(bx+(2+Math.random()*4)*s,by+(fk*-3)*s,.5*s,.5*s,'#ffdd66')}
+    if(frame%45<5){px(bx+(1+Math.random()*6)*s,by+(fk*-4)*s,.4*s,.4*s,'#ffaa44')}
+    // warm glow
+    c.fillStyle='rgba(255,150,60,'+(0.02+fk*0.02)+')';c.beginPath();c.arc((bx+4*s)*sc*2,(by+6*s)*sc*2,45*sc,0,Math.PI*2);c.fill();
+  }
+
+  // STALL: tycoon shop — wooden counter, sign, awning, crates, barrels, hanging items
+  function drawStall2(bx,by){
+    var s=2.5;
+    // back wall (darker wood)
+    px(bx+1*s,by+2*s,28*s,14*s,'#1c1208');
+    px(bx+2*s,by+3*s,26*s,12*s,'#2a1c10');
+    // shelves (3 rows) with bracket details
+    for(var row=0;row<3;row++){
+      var sy=by+(4+row*4)*s;
+      px(bx+3*s,sy,24*s,.8*s,'#4a3420'); // shelf
+      px(bx+3*s,sy+.8*s,1*s,1*s,'#3a2818'); // bracket L
+      px(bx+26*s,sy+.8*s,1*s,1*s,'#3a2818'); // bracket R
+    }
+    // goods on shelves — varied shapes!
+    // row 1: bottles & potions
+    var r1y=by+1.5*s;
+    px(bx+4*s,r1y,1.5*s,2.5*s,'#88aadd');px(bx+4.3*s,r1y-.5*s,.8*s,.8*s,'#6688bb'); // blue bottle
+    px(bx+7*s,r1y,1.5*s,2.5*s,'#cc7788');px(bx+7.3*s,r1y-.5*s,.8*s,.8*s,'#aa5566'); // pink bottle
+    px(bx+10*s,r1y+.5*s,2*s,2*s,'#ddaa44');px(bx+10.5*s,r1y,1*s,.8*s,'#aa8030'); // gold jar
+    px(bx+14*s,r1y,1*s,2.5*s,'#77bb88');px(bx+14.2*s,r1y-.3*s,.6*s,.5*s,'#558866'); // green vial
+    px(bx+17*s,r1y+.5*s,2*s,2*s,'#aa88cc');px(bx+17.2*s,r1y+.8*s,1.6*s,.4*s,'#8866aa'); // purple box
+    px(bx+21*s,r1y,1.5*s,2.5*s,'#ddcc88');px(bx+21.3*s,r1y-.5*s,.8*s,.8*s,'#bbaa66'); // yellow bottle
+    px(bx+24*s,r1y+1*s,1.5*s,1.5*s,'#cc4444'); // small red box
+    // row 2: fabrics & scrolls
+    var r2y=by+5.5*s;
+    px(bx+4*s,r2y,3*s,2.5*s,'#cc8844');px(bx+4.5*s,r2y+.3*s,2*s,.4*s,'#aa6622'); // fabric roll
+    px(bx+9*s,r2y+.5*s,1*s,2*s,'#eedd99');px(bx+9*s,r2y-.2*s,1*s,.8*s,'#ccbb77'); // scroll
+    px(bx+12*s,r2y,2.5*s,2.5*s,'#5566aa');px(bx+12.3*s,r2y+.3*s,1.8*s,.5*s,'#4455889'); // blue fabric
+    px(bx+16*s,r2y+.5*s,2*s,2*s,'#88cc88'); // green crate
+    px(bx+16.3*s,r2y+.8*s,1.4*s,.4*s,'#66aa66');
+    px(bx+20*s,r2y,1.5*s,2.5*s,'#dd9966');  // brown pot
+    px(bx+23*s,r2y+1*s,3*s,1.5*s,'#8a6a4a'); // long box
+    // row 3: gems & special items
+    var r3y=by+9.5*s;
+    px(bx+4*s,r3y+1*s,2*s,1.5*s,'#334455'); // dark chest
+    px(bx+4.5*s,r3y+1.2*s,1*s,.4*s,'#ddaa44'); // chest lock
+    px(bx+8*s,r3y+.5*s,1.5*s,2*s,'#dd5577'); // ruby crystal
+    c.fillStyle='rgba(221,85,119,.06)';c.beginPath();c.arc((bx+8.8*s)*sc*2,(r3y+1.5*s)*sc*2,3*sc,0,Math.PI*2);c.fill();
+    px(bx+12*s,r3y+.5*s,1.5*s,2*s,'#55aadd'); // sapphire
+    c.fillStyle='rgba(85,170,221,.06)';c.beginPath();c.arc((bx+12.8*s)*sc*2,(r3y+1.5*s)*sc*2,3*sc,0,Math.PI*2);c.fill();
+    px(bx+16*s,r3y+1*s,2.5*s,1.5*s,'#ddaa44'); // gold ingot!
+    c.fillStyle='rgba(232,200,96,.06)';c.beginPath();c.arc((bx+17.2*s)*sc*2,(r3y+1.5*s)*sc*2,4*sc,0,Math.PI*2);c.fill();
+    px(bx+20*s,r3y+.5*s,1*s,2*s,'#66dd88'); // emerald
+    px(bx+23*s,r3y+1*s,2.5*s,1.5*s,'#887766'); // mystery bag
+
+    // front counter (thick wood)
+    px(bx-1*s,by+14*s,32*s,2.5*s,'#4a3420');
+    px(bx-1*s,by+13.5*s,32*s,1*s,'#5a4430'); // counter top (lighter)
+    px(bx+0*s,by+16.5*s,2*s,3*s,'#3a2818'); // counter leg L
+    px(bx+28*s,by+16.5*s,2*s,3*s,'#3a2818'); // counter leg R
+    // counter detail — nail heads
+    for(var n=0;n<6;n++)px(bx+(3+n*5)*s,by+14.5*s,.4*s,.4*s,'#6a5438');
+
+    // awning (striped canvas — red/cream)
+    for(var i=0;i<9;i++){
+      px(bx+(-2+i*3.5)*s,by-3*s,3.5*s,4*s,i%2===0?'#8a2020':'#c4b090');
+    }
+    // awning edge (scalloped bottom)
+    for(var i=0;i<15;i++){
+      px(bx+(-2+i*2.2)*s,by+1*s,2*s,1*s,i%2===0?'#8a2020':'#c4b090');
+    }
+    // snow on awning
+    px(bx-2*s,by-3.5*s,32*s,1*s,'rgba(210,220,240,.12)');
+    // awning support poles
+    px(bx-1*s,by+1*s,1.5*s,13*s,'#3a2818');
+    px(bx+29*s,by+1*s,1.5*s,13*s,'#3a2818');
+    // sign board (hanging from awning)
+    px(bx+10*s,by-5*s,10*s,2.5*s,'#4a3420');
+    px(bx+10.5*s,by-4.5*s,9*s,1.5*s,'#5a4430');
+    // sign chains
+    px(bx+10*s,by-6*s,.4*s,1*s,'#888');px(bx+19.5*s,by-6*s,.4*s,1*s,'#888');
+    // sign text dots (representing "SHOP")
+    px(bx+12*s,by-4.2*s,1*s,.8*s,'#ddaa44');px(bx+14*s,by-4.2*s,1*s,.8*s,'#ddaa44');
+    px(bx+16*s,by-4.2*s,1*s,.8*s,'#ddaa44');px(bx+18*s,by-4.2*s,1*s,.8*s,'#ddaa44');
+
+    // barrel left side
+    px(bx-5*s,by+12*s,4*s,5*s,'#5a4020');
+    px(bx-4.5*s,by+12.5*s,3*s,.5*s,'#7a6040');
+    px(bx-4.5*s,by+15*s,3*s,.5*s,'#7a6040');
+    // small crate right side
+    px(bx+31*s,by+13*s,4*s,4*s,'#4a3818');
+    px(bx+31.5*s,by+13.5*s,3*s,.4*s,'#6a5838');
+    px(bx+31.5*s,by+15.5*s,3*s,.4*s,'#6a5838');
+    px(bx+32.5*s,by+14.5*s,.5*s,.5*s,'#ddaa44'); // nail
+
+    // hanging lanterns
+    [[bx-1*s,by+1*s],[bx+29.5*s,by+1*s]].forEach(function(p){
+      // chain
+      px(p[0]+.5*s,p[1],0.3*s,2*s,'#888');
+      // lantern body
+      c.fillStyle='rgba(255,153,68,.45)';c.fillRect((p[0])*sc*2,(p[1]+2*s)*sc*2,1.5*s*sc*2,2*s*sc*2);
+      c.fillStyle='rgba(255,153,68,.15)';c.fillRect((p[0]-.2*s)*sc*2,(p[1]+2.5*s)*sc*2,2*s*sc*2,1*s*sc*2);
+      // glow
+      c.fillStyle='rgba(255,153,68,.04)';c.beginPath();c.arc((p[0]+.8*s)*sc*2,(p[1]+3*s)*sc*2,18*sc,0,Math.PI*2);c.fill();
+    });
+  }
+
+  var frame=0;
+  function animate(){
+    frame++;c.clearRect(0,0,cv.width,cv.height);
+    // moon
+    c.fillStyle='rgba(230,235,250,.75)';c.beginPath();c.arc(380*sc*2,28*sc*2,14*sc*2,0,Math.PI*2);c.fill();
+    c.fillStyle='rgba(230,235,250,.03)';c.beginPath();c.arc(380*sc*2,28*sc*2,30*sc*2,0,Math.PI*2);c.fill();
+    // pines
+    c.fillStyle='#0e1820';[[20,58,16],[42,48,12],[395,62,14],[415,52,10],[435,58,12]].forEach(function(a){c.beginPath();c.moveTo(a[0]*sc*2,(a[1]+a[2])*sc*2);c.lineTo((a[0]+a[2]*.5)*sc*2,a[1]*sc*2);c.lineTo((a[0]+a[2])*sc*2,(a[1]+a[2])*sc*2);c.fill()});
+    c.fillStyle='#141e28';[[5,75,20],[445,70,18]].forEach(function(a){c.beginPath();c.moveTo(a[0]*sc*2,(a[1]+a[2])*sc*2);c.lineTo((a[0]+a[2]*.5)*sc*2,a[1]*sc*2);c.lineTo((a[0]+a[2])*sc*2,(a[1]+a[2])*sc*2);c.fill()});
+    // ground snow
+    c.fillStyle='rgba(180,195,220,.06)';c.fillRect(0,(GY+15)*sc*2,460*sc*2,30*sc*2);
+    c.fillStyle='rgba(200,215,230,.03)';c.fillRect(0,(GY+12)*sc*2,460*sc*2,3*sc*2);
+    // stall (positioned so counter aligns with ground)
+    drawStall2(145,38);
+    // brazier
+    drawBrazier2(72,58,frame);
+    // smoke from brazier
+    smokes.forEach(function(s){s.y+=s.vy;s.life+=.5;s.x+=Math.sin(s.life*.02)*.15;if(s.y<35){s.y=68;s.x=93+Math.random()*10;s.life=0}var al=s.a*Math.max(0,1-(68-s.y)/35);c.fillStyle='rgba(180,175,165,'+al+')';c.beginPath();c.arc(s.x*sc*2,s.y*sc*2,s.r*sc*2,0,Math.PI*2);c.fill()});
+    // NPCs (feet on ground)
+    npcs.forEach(function(n){
+      n.wait--;
+      if(n.state==='walk'){
+        if(Math.abs(n.x-n.targetX)<1){n.x=n.targetX;n.state='browse';n.wait=120+Math.random()*200}
+        else{n.x+=(n.targetX>n.x?n.speed:-n.speed);n.dir=n.targetX>n.x?1:-1}
+      }
+      if(n.state==='browse'&&n.wait<=0){
+        if(Math.random()<.4){n.targetX=460;n.state='leave'}
+        else{n.targetX=180+Math.random()*80;n.state='walk'}
+      }
+      if(n.state==='leave'){
+        n.x+=n.speed*1.2;if(n.x>470){n.x=-30;n.targetX=190+Math.random()*70;n.state='walk'}
+      }
+      drawNPC(n.x,GY,frame,n.dir,n.col,n.hat);
+    });
+    // merchant AI
+    mwait--;
+    if(mwait<=0){
+      if(mstate==='idle'){var r=Math.random();if(r<.25){mstate='walk';mtarget=targets[Math.floor(Math.random()*4)]}else if(r<.4){mstate='serve';mwait=90}else{mwait=50+Math.random()*80}}
+      if(mstate==='walk'){if(Math.abs(mx-mtarget)<2){mx=mtarget;mstate='idle';mwait=40+Math.random()*60}else{mx+=(mtarget>mx?1.2:-1.2);mdir=mtarget>mx?1:-1}}
+      if(mstate==='serve'&&mwait<=0){mstate='idle';mwait=30;if(typeof spawnCoins==='function')spawnCoins(5)}
+    }
+    drawMerchant2(mx,GY,frame,mdir);
+    requestAnimationFrame(animate)}
+  animate();
+}();
+
+function initWxP(){document.querySelectorAll('.wx canvas').forEach(function(cv){var ctx=cv.getContext('2d'),t=cv.dataset.t;cv.width=cv.offsetWidth*2;cv.height=cv.offsetHeight*2;var W=cv.width,H=cv.height,ps=[];for(var i=0;i<12;i++)ps.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*2+.5,vy:t==='storm'?Math.random()*2+1:Math.random()+.3,vx:t==='storm'?(Math.random()-.3)*2:Math.random()*.3-.15,a:Math.random()});!function d(){ctx.clearRect(0,0,W,H);ps.forEach(function(p){p.y+=p.vy;p.x+=p.vx;p.a+=.01;if(p.y>H){p.y=-5;p.x=Math.random()*W}if(p.x<0)p.x=W;if(p.x>W)p.x=0;ctx.fillStyle=t==='clear'?'rgba(230,220,180,'+(0.04+0.04*Math.sin(p.a))+')':'rgba(200,220,240,'+(0.07+p.r*0.03)+')';ctx.beginPath();ctx.arc(p.x,p.y,p.r*(t==='storm'?1.3:t==='clear'?.6:1),0,Math.PI*2);ctx.fill()});requestAnimationFrame(d)}()})}
+
+var CUSTS=[{t:1,e:'🧑‍🌾',nm:'농부',g:'소',별:'★',bg:'#182818',대사:'싼 물건 알려줘'},{t:2,e:'🧑‍🔧',nm:'장인',g:'소',별:'★★',bg:'#1a2820',대사:'좋은 재료 사겠소'},{t:3,e:'🧑‍💼',nm:'상인',g:'중',별:'★★★',bg:'#182840',대사:'흥정은 내가 좀 해'},{t:4,e:'🎖',nm:'기사',g:'중',별:'★★★',bg:'#1a2850',대사:'좋은 무기 찾고있소'},{t:5,e:'🧙',nm:'마법사',g:'중',별:'★★★★',bg:'#201840',대사:'희귀한 것만 관심'},{t:6,e:'👸',nm:'귀족',g:'대',별:'★★★★',bg:'#281838',대사:'최고급만 보여줘'},{t:7,e:'🤴',nm:'왕자',g:'대',별:'★★★★★',bg:'#301838',대사:'최고의 보물을!'},{t:8,e:'👑',nm:'여왕',g:'대',별:'★★★★★',bg:'#381830',대사:'짐의 눈에 드는것만'}];
 var DRINKS=[{e:'💧',nm:'물',기준:0},{e:'🍵',nm:'보리차',기준:100},{e:'☕',nm:'코코아',기준:500},{e:'🍯',nm:'꿀차',기준:1000},{e:'🍷',nm:'와인',기준:3000},{e:'🥂',nm:'황금주',기준:10000}];
-
-var GOODS_NAMES=['향신료 주머니','비단 두루마리','자수정 원석','도자기 화병','마법의 두루마리','용의 비늘','달빛 수정','별의 결정'];
-var GOODS_EMOJI=['🌿','🧶','💎','🏺','📜','🐉','🔮','⭐'];
-function getGoodsRank(tier){return tier<=2?'rare':tier<=5?'epic':'legend'}
-
+var GN=['향신료','비단','자수정','도자기','마법서','용비늘','달수정','별결정'];
+var GE=['🌿','🧶','💎','🏺','📜','🐉','🔮','⭐'];
+function gR(i){return i<=2?'rare':i<=5?'epic':'legend'}
+var QUOTES={천장_이익:["맑은 겨울밤, <em>금화가 쌓여간다.</em>","등불 아래 금화를 센다. <em>좋은 밤이다.</em>","차가운 공기가 상쾌하다. <em>오늘도 좋은 거래.</em>","별이 유난히 밝다. <em>이 기세를 이어가자.</em>","화로가 따뜻하고, <em>주머니도 따뜻하다.</em>","손님들이 웃으며 간다. <em>이런 밤이 좋다.</em>"],천장_손실:["맑은 밤인데 시원찮구나. <em>내일은 달라지겠지.</em>","별빛은 밝은데 금고가 허전하다. <em>참을성이다.</em>","화로 앞에서 생각에 잠긴다. <em>조급하지 말자.</em>"],중간_이익:["눈이 내리기 시작한다. <em>그래도 장사는 괜찮다.</em>","바람이 불지만, <em>금화 소리가 좋구나.</em>"],중간_손실:["눈보라가 올 것 같다. <em>가게를 단단히 해두자.</em>","찬바람이 매섭다. <em>화로 옆에서 쉬어가자.</em>"],바닥_이익:["우박 속에서도 <em>거래 성사!</em> 대단하다.","위기가 기회다. <em>나는 여기서 금화를 번다.</em>"],바닥_손실:["매서운 우박이다. <em>버텨야 한다.</em>","겨울이 아무리 길어도 <em>봄은 온다.</em>","어둠이 깊을수록 <em>새벽이 가깝다.</em>"]};
+function getQ(z,p){var k=z+'_'+(p>=0?'이익':'손실');var pool=QUOTES[k]||QUOTES['천장_이익'];return pool[Math.floor(Math.random()*pool.length)]}
+function getZS(z){if(z==='바닥')return{ic:'⛈',nm:'우박',c:'var(--dmg)',bg:'rgba(204,102,85,.06)'};if(z==='중간')return{ic:'🌨',nm:'눈보라',c:'var(--frost)',bg:'rgba(136,187,221,.06)'};return{ic:'🌙',nm:'맑은 밤',c:'var(--gold)',bg:'rgba(232,200,96,.06)'};}
 function fG(v){if(!v&&v!==0)return '--';v=Number(v);return v>=1e6?'$'+(v/1e6).toFixed(1)+'M':v>=1e3?'$'+(v/1e3).toFixed(0)+'K':'$'+v.toFixed(0)}
-function fW(v){if(!v)return '';var w=v*1450;return w>=1e8?'약 '+(w/1e8).toFixed(0)+'억원':'약 '+(w/1e4).toFixed(0)+'만원'}
-function fP(v){if(!v&&v!==0)return '--';return (v>=0?'+':'')+v.toFixed(2)+'%'}
+function fP(v){if(!v&&v!==0)return '--';return(v>=0?'+':'')+v.toFixed(2)+'%'}
 
-// ══ LOAD ══
-async function loadAll(){
-  addLog('ll-sys','━━ 데이터 갱신 중... ━━');
-  if(API_URL==='YOUR_APPS_SCRIPT_URL_HERE'){addLog('ll-loss','[안내] API URL 미설정 — 데모 모드');renderDemo();return}
-  dashData=await fetchAPI('dashboard');ordData=await fetchAPI('orders');
-  if(dashData&&dashData.상태==='OK'){
-    renderAll();
-    addLog('ll-sys','[갱신] ✅ 데이터 수신 완료');
-    addLog('ll-weather','  📍 구간: '+dashData.모험.구간+' ('+dashData.모험.모드+')');
-    addLog('ll-sell','  💰 금고: '+fG(dashData.계좌.총자산));
-  } else {addLog('ll-loss','[오류] 데이터 수신 실패 — 데모 모드');renderDemo()}
-  document.getElementById('refreshBar').innerHTML='마지막 갱신: '+new Date().toLocaleTimeString('ko-KR')+'<button onclick="loadAll()">🔄 새로고침</button>';
-}
+async function loadAll(){dashData=await fetchAPI('dashboard');ordData=await fetchAPI('orders');if(!dashData||dashData.상태!=='OK')renderDemo();renderAll();document.getElementById('refreshBar').innerHTML=new Date().toLocaleTimeString('ko-KR')+'<button onclick="loadAll()">🔄</button>'}
+function renderDemo(){dashData={기본정보:{종목:'SOXL',현재가:54.59,원금:44000},계좌:{총자산:44364,보유주식:129,평단:55.86,평가금:7042,예수금:37322,평가손익:-174,누적실현:534,수익률:0.83,CAGR:39.7,MDD:-1.06},모험:{구간:'천장'},대기물량:[{매수일:'03-02',매수가:62.76,목표가격:63.04,수량:19,손익률:-13.0},{매수일:'03-05',매수가:54.80,목표가격:55.05,수량:43,손익률:-0.38},{매수일:'03-10',매수가:54.59,목표가격:55.80,수량:67,손익률:0}]};ordData={상태:'OK',매수주문:[{가격:55.79,수량:44,주문법:'LOC'},{가격:55.04,수량:43,주문법:'LOC'},{가격:53.6,수량:5,주문법:'LOC'},{가격:50.83,수량:5,주문법:'LOC'},{가격:48.34,수량:5,주문법:'LOC'},{가격:46.08,수량:5,주문법:'LOC'}],매도주문:[{가격:63.04,수량:19,주문법:'LOC'},{가격:56.18,수량:87,주문법:'LOC'},{가격:55.8,수량:23,주문법:'LOC'}]}}
+function renderAll(){renderHud();renderQuote();renderSkills();renderWeather();renderGoods();renderOrders();renderQueue();renderCustomers();renderDrinks();renderChat()}
 
-function renderDemo(){
-  dashData={기본정보:{종목:'SOXL',현재가:54.59,원금:44000},계좌:{총자산:44364,보유주식:129,평단:55.86,평가금:7042,예수금:37322,평가손익:-174,누적실현:534,수익률:0.83,CAGR:39.7,MDD:-1.06,평가수익률:-2.28},모험:{구간:'천장',모드:'화산'},
-  대기물량:[{매수일:'03-02',매수가:62.76,목표가격:63.04,수량:19,손익률:-13.0},{매수일:'03-05',매수가:54.80,목표가격:55.05,수량:43,손익률:-0.38},{매수일:'03-10',매수가:54.59,목표가격:55.80,수량:67,손익률:0}]};
-  ordData={상태:'OK',매수주문:[{가격:56.17,수량:87},{가격:53.60,수량:5},{가격:50.83,수량:5},{가격:48.34,수량:5},{가격:46.08,수량:5}],매도주문:[{가격:63.04,수량:19},{가격:55.05,수량:43},{가격:55.80,수량:67}]};
-  renderAll();}
+function renderHud(){var d=dashData;if(!d)return;var pnl=d.계좌.평가손익||0;
+  document.getElementById('tHud').innerHTML='<span class="t-hud-title">❄ 상인 키우기 타이쿤</span>'+
+  '<div class="t-res"><span class="ri">💰</span><span class="rv">'+fG(d.계좌.총자산)+'</span></div>'+
+  '<div class="t-res '+(pnl>=0?'t-res-up':'t-res-dn')+'"><span class="ri">'+(pnl>=0?'📈':'📉')+'</span><span class="rv">'+(pnl>=0?'+':'')+'$'+Math.abs(pnl)+'</span></div>'+
+  '<div class="t-res"><span class="ri">📦</span><span class="rv">'+(d.계좌.보유주식||0)+'</span></div>'+
+  '<div class="t-res"><span class="ri">💵</span><span class="rv">$'+d.기본정보.현재가+'</span></div>'+
+  '<div class="t-res"><span class="ri">🏆</span><span class="rv">+$'+d.계좌.누적실현+'</span></div>'}
 
-function renderAll(){renderHud();renderScene();renderSkills();renderWeather();renderGoods();renderOrders();renderCustomers();renderDrinks()}
-
-function renderHud(){var d=dashData;if(!d)return;
-  document.getElementById('hud').innerHTML=
-    '<div class="hud-item"><span class="hi">💰</span><span class="hv">'+fG(d.계좌.총자산)+'</span></div>'+
-    '<div class="hud-item"><span class="hi">📦</span><span class="hv">'+(d.계좌.보유주식||0)+'개</span></div>'+
-    '<div class="hud-item"><span class="hi">💵</span><span class="hv">$'+(d.기본정보.현재가||'--')+'</span></div>'+
-    '<div class="hud-item"><span class="hi">📈</span><span class="hv">'+fP(d.계좌.수익률)+'</span></div>'}
-
-function renderScene(){var d=dashData;if(!d)return;
-  var pct=Math.min(d.계좌.총자산/d.기본정보.원금*50,100),gc=d.계좌.총자산>=d.기본정보.원금?'up':'dn',xp=Math.min((d.계좌.CAGR/50)*100,100);
-  document.getElementById('sceneCt').innerHTML=
-  '<div class="char-card"><div class="char-frame"><canvas id="mCv" width="200" height="240"></canvas>'+
-  '<div class="char-nm">겨울밤 상인</div><div class="char-title">'+d.기본정보.종목+' 무역상</div>'+
-  '<div class="cb"><span class="cb-icon">❤</span><span class="cb-label">체력</span><div class="cb-track"><div class="cb-fill" style="width:'+(100-Math.abs(d.계좌.MDD))+'%;background:var(--hp)"></div></div><span class="cb-val" style="color:var(--hp)">'+(100-Math.abs(d.계좌.MDD)).toFixed(0)+'</span></div>'+
-  '<div class="cb"><span class="cb-icon">💰</span><span class="cb-label">자금</span><div class="cb-track"><div class="cb-fill" style="width:'+Math.min(d.계좌.예수금/d.기본정보.원금*100,100)+'%;background:var(--gold)"></div></div><span class="cb-val" style="color:var(--gold)">'+Math.round(d.계좌.예수금/d.기본정보.원금*100)+'%</span></div>'+
-  '<div class="cb"><span class="cb-icon">⭐</span><span class="cb-label">경험</span><div class="cb-track"><div class="cb-fill" style="width:'+xp+'%;background:var(--xp)"></div></div><span class="cb-val" style="color:var(--xp)">'+d.계좌.CAGR+'%</span></div>'+
-  '</div><div class="lv-ring">Lv.2</div><div class="brazier-wrap"><canvas id="brCv"></canvas></div></div>'+
-  '<div class="treasury"><div class="tr-label">💰 상인의 금고</div>'+
-  '<div class="tr-amount">'+fG(d.계좌.총자산)+'</div>'+
-  '<div class="tr-sub">초기 자본 '+fG(d.기본정보.원금)+' → <span class="'+gc+'">×'+(d.계좌.총자산/d.기본정보.원금).toFixed(2)+'</span></div>'+
-  '<div class="gold-track"><div class="gold-fill" style="width:'+pct+'%"></div></div>'+
-  '<div class="xp-wrap"><div class="xp-label"><span>⭐ 경험치</span><span>'+d.계좌.CAGR+'%/50%</span></div><div class="xp-track"><div class="xp-fill" style="width:'+xp+'%"></div></div></div>'+
-  '<div class="tr-grid">'+
-  '<div class="tg"><div class="tg-v" style="color:'+(d.계좌.평가손익>=0?'var(--hp)':'var(--dmg)')+';">'+(d.계좌.평가손익>=0?'+':'')+'$'+Math.abs(d.계좌.평가손익)+'</div><div class="tg-l">평가손익</div></div>'+
-  '<div class="tg"><div class="tg-v" style="color:var(--hp)">+$'+d.계좌.누적실현+'</div><div class="tg-l">누적 수익</div></div>'+
-  '<div class="tg"><div class="tg-v" style="color:var(--gold)">'+d.계좌.CAGR+'%</div><div class="tg-l">연 수익률</div></div></div></div>';
-  drawM(document.getElementById('mCv'));if(brA)cancelAnimationFrame(brA);animBr()}
+function renderQuote(){var d=dashData;if(!d)return;var z=d.모험.구간||'천장',pnl=d.계좌.평가손익||0,zs=getZS(z);
+  document.getElementById('sceneQuote').innerHTML='<div class="sq-head"><span class="sq-name">💬 겨울밤 상인</span><span class="sq-zone" style="color:'+zs.c+';background:'+zs.bg+'">'+zs.ic+' '+zs.nm+'</span></div><div class="sq-body">'+getQ(z,pnl)+'</div><div class="sq-stats"><div class="sq-stat">💰 <span class="sq-sv" style="color:var(--gold)">'+fG(d.계좌.총자산)+'</span></div><div class="sq-stat">📊 <span class="sq-sv" style="color:var(--gold)">CAGR '+d.계좌.CAGR+'%</span></div><div class="sq-stat">💵 <span class="sq-sv">예수금 '+fG(d.계좌.예수금)+'</span></div></div>'}
 
 function renderSkills(){var d=dashData;if(!d)return;
-  var sk=[{ic:'⚔',nm:'거래 실력',val:fP(d.계좌.수익률),desc:'총 수익률',pct:Math.min(Math.abs(d.계좌.수익률)*10,100),c:'var(--gold)'},{ic:'🛡',nm:'위험 방어',val:Math.abs(d.계좌.MDD)+'%',desc:'최대 손실 방어',pct:100-Math.abs(d.계좌.MDD),c:'var(--hp)'},{ic:'📈',nm:'성장 속도',val:d.계좌.CAGR+'%',desc:'연간 복리',pct:Math.min(d.계좌.CAGR*2,100),c:'var(--xp)'},{ic:'💎',nm:'상품 관리',val:(d.계좌.보유주식||0)+'개',desc:'보유 상품',pct:Math.min((d.계좌.보유주식||0)/200*100,100),c:'var(--mp)'},{ic:'🏦',nm:'자금 운용',val:fG(d.계좌.예수금),desc:'가용 자금',pct:Math.min(d.계좌.예수금/d.기본정보.원금*100,100),c:'var(--frost)'},{ic:'🎯',nm:'판매 정확도',val:'86%',desc:'승률',pct:86,c:'var(--legend)'}];
-  document.getElementById('skills').innerHTML=sk.map(function(s){return '<div class="skill"><div class="skill-icon">'+s.ic+'</div><div class="skill-name">'+s.nm+'</div><div class="skill-val" style="color:'+s.c+'">'+s.val+'</div><div class="skill-desc">'+s.desc+'</div><div class="skill-bar"><div class="skill-fill" style="width:'+s.pct+'%;background:'+s.c+'"></div></div></div>'}).join('')}
+  var sk=[{ic:'⚔',nm:'거래',val:fP(d.계좌.수익률),pct:Math.min(Math.abs(d.계좌.수익률)*10,100),c:'var(--gold)'},{ic:'🛡',nm:'방어',val:Math.abs(d.계좌.MDD)+'%',pct:100-Math.abs(d.계좌.MDD),c:'var(--hp)'},{ic:'📈',nm:'성장',val:d.계좌.CAGR+'%',pct:Math.min(d.계좌.CAGR*2,100),c:'var(--xp)'},{ic:'💎',nm:'상품',val:(d.계좌.보유주식||0)+'개',pct:Math.min((d.계좌.보유주식||0)/200*100,100),c:'var(--mp)'},{ic:'🏦',nm:'자금',val:fG(d.계좌.예수금),pct:Math.min(d.계좌.예수금/d.기본정보.원금*100,100),c:'var(--frost)'},{ic:'🎯',nm:'승률',val:'86%',pct:86,c:'var(--legend)'}];
+  document.getElementById('skills').innerHTML=sk.map(function(s){return '<div class="skill"><div class="skill-icon">'+s.ic+'</div><div class="skill-name">'+s.nm+'</div><div class="skill-val" style="color:'+s.c+'">'+s.val+'</div><div class="skill-bar"><div class="skill-fill" style="width:'+s.pct+'%;background:'+s.c+'"></div></div></div>'}).join('')}
 
-function renderWeather(){var d=dashData;if(!d)return;
-  var modeMap={'천장':'clear','중간':'bliz','바닥':'storm'};var active=modeMap[d.모험.구간]||'clear';
-  var ws=[{id:'clear',cls:'wx-clear',ic:'🌙',nm:'맑은 겨울밤',desc:'별빛 아래 장사하기 좋은 밤',badge:'최적',bc:'var(--gold)',bg:'rgba(232,200,96,.06)'},{id:'bliz',cls:'wx-bliz',ic:'🌨',nm:'눈보라',desc:'장사 잠시 쉬어가세요',badge:'주의',bc:'var(--frost)',bg:'rgba(136,187,221,.06)'},{id:'storm',cls:'wx-storm',ic:'⛈',nm:'폭풍설',desc:'가게 문을 닫으세요',badge:'위험',bc:'var(--dmg)',bg:'rgba(204,102,85,.06)'}];
-  document.getElementById('wxGrid').innerHTML=ws.map(function(w){return '<div class="wx '+w.cls+(w.id===active?' wa':'')+'"><canvas data-t="'+w.id+'"></canvas><div class="wx-ct"><div class="wx-ic">'+w.ic+'</div><div class="wx-nm" style="color:'+(w.id===active?w.bc:'var(--txt2)')+'">'+w.nm+'</div><div class="wx-ds">'+w.desc+'</div><div class="wx-badge" style="color:'+w.bc+';background:'+w.bg+'">'+(w.id===active?'▶ 현재':w.badge)+'</div></div></div>'}).join('');setTimeout(initWxP,50)}
+function renderWeather(){var d=dashData;if(!d)return;var mm={'천장':'clear','중간':'bliz','바닥':'storm'},ac=mm[d.모험.구간]||'clear';
+  var ws=[{id:'clear',cls:'wx-clear',ic:'🌙',nm:'맑은 밤',ds:'장사하기 좋은 밤',bc:'var(--gold)',bg:'rgba(232,200,96,.06)'},{id:'bliz',cls:'wx-bliz',ic:'🌨',nm:'눈보라',ds:'쉬어가세요',bc:'var(--frost)',bg:'rgba(136,187,221,.06)'},{id:'storm',cls:'wx-storm',ic:'⛈',nm:'우박',ds:'문을 닫으세요',bc:'var(--dmg)',bg:'rgba(204,102,85,.06)'}];
+  document.getElementById('wxGrid').innerHTML=ws.map(function(w){return '<div class="wx '+w.cls+(w.id===ac?' wa':'')+'"><canvas data-t="'+w.id+'"></canvas><div class="wx-ct"><div class="wx-ic">'+w.ic+'</div><div class="wx-nm" style="color:'+(w.id===ac?w.bc:'var(--txt2)')+'">'+w.nm+'</div><div class="wx-ds">'+w.ds+'</div><div class="wx-badge" style="color:'+w.bc+';background:'+w.bg+'">'+(w.id===ac?'▶ 현재':'')+'</div></div></div>'}).join('');setTimeout(initWxP,50)}
 
-function renderGoods(){var d=dashData;if(!d||!d.대기물량||!d.대기물량.length){document.getElementById('goods').innerHTML='<div style="text-align:center;padding:20px;color:var(--dim)">📦 상품 없음</div>';return}
-  document.getElementById('goods').innerHTML=d.대기물량.map(function(p,i){
-    var pnl=typeof p.손익률==='number'?p.손익률:0;var cls=pnl>=0?'win':'lose';
-    var days=p.매수일?Math.max(1,Math.round((Date.now()-new Date(p.매수일).getTime())/(1000*60*60*24))):1;
-    var pct=Math.min(days/30*100,100);var fC=pnl>0?'gf-profit':pnl>-5?'gf-wait':'gf-loss';
-    var rank=getGoodsRank(i+1);var rC=rank==='legend'?'var(--legend)':rank==='epic'?'var(--epic)':'var(--rare)';
-    var rL=rank==='legend'?'전설':rank==='epic'?'영웅':'희귀';
-    var nm=GOODS_NAMES[i%GOODS_NAMES.length];var em=GOODS_EMOJI[i%GOODS_EMOJI.length];
-    var dateStr=p.매수일||'';if(dateStr.length>5)dateStr=dateStr.slice(5);
-    return '<div class="good good-'+rank+'"><div class="good-icon">'+em+'</div><div class="good-info"><div class="good-name">'+nm+' <span class="g-rank" style="color:'+rC+';background:'+rC+'15;border:1px solid '+rC+'30">'+rL+'</span></div><div class="good-detail">'+dateStr+' 매입 · $'+p.매수가+' × '+p.수량+'개 · 목표 $'+p.목표가격+'</div><div class="good-bar-wrap"><div class="good-bar"><div class="good-fill '+fC+'" style="width:'+pct+'%"></div></div><div class="good-days">'+days+'일째</div></div></div><div class="good-pnl '+cls+'">'+(pnl>=0?'+':'')+pnl.toFixed(1)+'%</div></div>'}).join('')}
+function renderGoods(){var d=dashData;if(!d||!d.대기물량||!d.대기물량.length){document.getElementById('goods').innerHTML='<div style="text-align:center;padding:14px;color:var(--dim);font-size:12px">📦 상품 없음</div>';return}
+  document.getElementById('goods').innerHTML=d.대기물량.map(function(p,i){var pnl=typeof p.손익률==='number'?p.손익률:0,cls=pnl>=0?'win':'lose';var days=p.매수일?Math.max(1,Math.round((Date.now()-new Date(p.매수일).getTime())/864e5)):1;var pct=Math.min(days/30*100,100),fC=pnl>0?'gf-profit':pnl>-5?'gf-wait':'gf-loss';var rk=gR(i+1),rC=rk==='legend'?'var(--legend)':rk==='epic'?'var(--epic)':'var(--rare)',rL=rk==='legend'?'전설':rk==='epic'?'영웅':'희귀';var ds=p.매수일||'';if(ds.length>5)ds=ds.slice(5);return '<div class="good good-'+rk+'"><div class="good-icon">'+GE[i%8]+'</div><div class="good-info"><div class="good-name">'+GN[i%8]+' <span class="g-rank" style="color:'+rC+';background:'+rC+'15;border:1px solid '+rC+'30">'+rL+'</span></div><div class="good-detail">'+ds+' · $'+p.매수가+'×'+p.수량+'개 → $'+p.목표가격+'</div><div class="good-bar-wrap"><div class="good-bar"><div class="good-fill '+fC+'" style="width:'+pct+'%"></div></div><div class="good-days">'+days+'일</div></div></div><div class="good-pnl '+cls+'">'+(pnl>=0?'+':'')+pnl.toFixed(1)+'%</div></div>'}).join('')}
 
 function renderOrders(){var o=ordData;if(!o||o.상태!=='OK')return;
-  var bH=o.매수주문&&o.매수주문.length?o.매수주문.map(function(b){return '<div class="ord-row"><span class="o-p" style="color:var(--mp)">$'+b.가격+'</span><span class="o-q">'+b.수량+'개</span></div>'}).join(''):'<div style="text-align:center;padding:12px;color:var(--dim)">없음</div>';
-  var sH=o.매도주문&&o.매도주문.length?o.매도주문.map(function(s){return '<div class="ord-row"><span class="o-p" style="color:var(--legend)">$'+s.가격+'</span><span class="o-q">'+s.수량+'개</span></div>'}).join(''):'<div style="text-align:center;padding:12px;color:var(--dim)">없음</div>';
-  document.getElementById('orders').innerHTML='<div class="ord-col buy-c"><h3>📥 매입 예정 ('+(o.매수주문?o.매수주문.length:0)+'건)</h3>'+bH+'</div><div class="ord-col sell-c"><h3>📤 판매 예정 ('+(o.매도주문?o.매도주문.length:0)+'건)</h3>'+sH+'</div>'}
+  var bH=o.매수주문&&o.매수주문.length?o.매수주문.map(function(b){return '<div class="ord-row"><span style="color:var(--mp);font-weight:700">$'+b.가격+'</span><span style="color:var(--dim)">'+b.수량+'개<span class="ord-type">'+b.주문법+'</span></span></div>'}).join(''):'';
+  var sH=o.매도주문&&o.매도주문.length?o.매도주문.map(function(s){return '<div class="ord-row"><span style="color:var(--legend);font-weight:700">$'+s.가격+'</span><span style="color:var(--dim)">'+s.수량+'개<span class="ord-type">'+s.주문법+'</span></span></div>'}).join(''):'';
+  document.getElementById('orders').innerHTML='<div class="ord-col buy-c"><h3>📥 매입 ('+(o.매수주문?o.매수주문.length:0)+')</h3>'+bH+'</div><div class="ord-col sell-c"><h3>📤 판매 ('+(o.매도주문?o.매도주문.length:0)+')</h3>'+sH+'</div>'}
 
-function renderCustomers(){
-  document.getElementById('custGrid').innerHTML=CUSTS.map(function(c){
-    var gc=c.g==='소'?'cust-s':c.g==='중'?'cust-m':'cust-l';var rc=c.g==='소'?'var(--hp)':c.g==='중'?'var(--mp)':'var(--epic)';
-    var label=c.g==='소'?'일반 고객':c.g==='중'?'우수 고객':'VIP 고객';
-    return '<div class="cust '+gc+'"><div class="cust-top"><div class="cust-avatar" style="background:'+c.bg+'"><span class="cust-tier">T'+c.t+'</span>'+c.e+'</div><div class="cust-info"><div class="cust-name">'+c.nm+'</div><div class="cust-rank"><span class="cr-stars">'+c.별+'</span> <span style="color:'+rc+';font-size:10px">'+label+'</span></div></div></div><div class="cust-div"></div><div class="cust-quote">'+c.대사+'</div></div>'}).join('')}
+function renderQueue(){var o=ordData;if(!o||!o.매도주문||!o.매도주문.length){document.getElementById('queueWrap').innerHTML='<div style="text-align:center;padding:14px;color:var(--dim);font-size:12px">대기 없음</div>';return}
+  var ce=['🧑‍🌾','🧑‍🔧','🧑‍💼','🎖','🧙','👸','🤴','👑'];
+  document.getElementById('queueWrap').innerHTML='<div class="queue"><div class="q-stall">🏪</div>'+o.매도주문.map(function(s,i){return '<div class="q-person"><div class="q-num">'+(i+1)+'</div><div class="q-avatar">'+ce[Math.min(i,7)]+'</div><div class="q-want">$'+s.가격+'</div><div class="q-qty">'+s.수량+'개</div></div>'}).join('')+'</div>'}
 
-function renderDrinks(){var d=dashData;if(!d)return;
-  var profit=d.계좌.누적실현||0;var curIdx=0;
-  DRINKS.forEach(function(dr,i){if(profit>=dr.기준)curIdx=i});
-  var next=DRINKS[curIdx+1];
-  document.getElementById('drinkWrap').innerHTML=
-    '<div class="drink-progress"><span style="font-size:13px">누적 수익 <strong style="color:var(--gold)">$'+profit+'</strong></span>'+
-    '<div class="drink-bar"><div class="drink-bar-fill" style="width:'+((curIdx+1)/DRINKS.length*100)+'%"></div></div>'+
-    '<span class="drink-status">'+(curIdx+1)+'/'+DRINKS.length+' 해금</span></div>'+
-    '<div class="drinks">'+DRINKS.map(function(dr,i){
-      var unlocked=profit>=dr.기준;var isCur=i===curIdx;
-      var cls=unlocked?(isCur?'unlocked current':'unlocked'):'locked';
-      return '<div class="drink '+cls+'"><div class="drink-check">'+(unlocked?'✅':'🔒')+'</div><span class="drink-icon">'+dr.e+'</span><div class="drink-name" style="color:'+(unlocked?'var(--warm)':'var(--dim)')+'">'+dr.nm+'</div><div class="drink-req">'+(dr.기준===0?'시작':dr.기준>=1000?'$'+(dr.기준/1000)+'K':'$'+dr.기준)+'+</div></div>'}).join('')+'</div>'+
-    (next?'<div style="text-align:center;margin-top:12px;font-size:12px;color:var(--dim)">다음: '+next.e+' '+next.nm+' — <span style="color:var(--gold)">$'+(next.기준-profit)+'</span> 더 벌면 해금!</div>':'<div style="text-align:center;margin-top:12px;font-size:12px;color:var(--gold)">🏆 모든 음료 해금!</div>')}
+function renderCustomers(){document.getElementById('custGrid').innerHTML=CUSTS.map(function(c){var gc=c.g==='소'?'cust-s':c.g==='중'?'cust-m':'cust-l';return '<div class="cust '+gc+'"><span class="cust-tier-badge">T'+c.t+'</span><span class="cust-emoji">'+c.e+'</span><div class="cust-nm">'+c.nm+'</div><span class="cust-stars">'+c.별+'</span><div class="cust-quote">'+c.대사+'</div></div>'}).join('')}
 
-function addLog(cls,text){var el=document.getElementById('logEl');var d=document.createElement('div');d.className='ll '+cls;d.textContent=text;el.appendChild(d);el.scrollTop=el.scrollHeight;if(el.children.length>40)el.removeChild(el.firstChild)}
+function renderDrinks(){var d=dashData;if(!d)return;var profit=d.계좌.누적실현||0,ci=0;DRINKS.forEach(function(dr,i){if(profit>=dr.기준)ci=i});var next=DRINKS[ci+1];
+  document.getElementById('drinkWrap').innerHTML='<div class="drink-progress"><span>누적 <strong style="color:var(--gold)">$'+profit+'</strong></span><div class="drink-bar"><div class="drink-bar-fill" style="width:'+((ci+1)/DRINKS.length*100)+'%"></div></div><span class="drink-status">'+(ci+1)+'/'+DRINKS.length+'</span></div><div class="drinks">'+DRINKS.map(function(dr,i){var u=profit>=dr.기준,ic=i===ci;return '<div class="drink '+(u?(ic?'unlocked current':'unlocked'):'locked')+'"><div class="drink-check">'+(u?'✅':'🔒')+'</div><span class="drink-icon">'+dr.e+'</span><div class="drink-name" style="color:'+(u?'var(--warm)':'var(--dim)')+'">'+dr.nm+'</div><div class="drink-req">'+(dr.기준===0?'시작':dr.기준>=1000?'$'+(dr.기준/1000)+'K':'$'+dr.기준)+'</div></div>'}).join('')+'</div>'+(next?'<div style="text-align:center;margin-top:6px;font-size:10px;color:var(--dim)">다음 '+next.e+' — $'+(next.기준-profit)+' 남음</div>':'')}
+
+function renderChat(){var d=dashData;if(!d)return;var el=document.getElementById('chatBody');el.innerHTML='';
+  var msgs=[{type:'sys',text:'━━ 화로 옆 이야기 ━━'}];var zs=getZS(d.모험.구간||'천장');msgs.push({type:'sys',text:zs.ic+' '+zs.nm});
+  if(d.대기물량)d.대기물량.forEach(function(p,i){var pnl=typeof p.손익률==='number'?p.손익률:0;msgs.push({type:'buy',av:'🧑‍💼',nm:'상인',text:GN[i%8]+' 매입 $'+p.매수가+'×'+p.수량});if(pnl>0)msgs.push({type:'profit',av:'💰',nm:'금고',text:'+'+pnl.toFixed(1)+'% ★'});else if(pnl<-5)msgs.push({type:'loss',av:'⚠',nm:'경고',text:pnl.toFixed(1)+'%'})});
+  if(d.계좌.누적실현>500)msgs.push({type:'profit',av:'☕',nm:'화로',text:'코코아 한 잔!'});
+  msgs.push({type:'sys',text:getQ(d.모험.구간||'천장',d.계좌.평가손익||0).replace(/<\/?em>/g,'')});
+  var delay=0;msgs.forEach(function(m){setTimeout(function(){var div=document.createElement('div');div.className='msg msg-'+m.type;
+    if(m.type==='sys')div.innerHTML='<div class="msg-content"><div class="msg-bubble">'+m.text+'</div></div>';
+    else div.innerHTML='<div class="msg-avatar">'+m.av+'</div><div class="msg-content"><div class="msg-name">'+m.nm+'</div><div class="msg-bubble">'+m.text+'</div></div>';
+    el.appendChild(div);el.scrollTop=el.scrollHeight},delay);delay+=350})}
 
 function openModal(){document.getElementById('modalBg').classList.add('open')}
 function closeModal(){document.getElementById('modalBg').classList.remove('open');document.getElementById('tMsg').innerHTML=''}
-function setTT(t){tradeType=t;document.querySelectorAll('.m-tab').forEach(function(el){el.classList.remove('on')});document.querySelector(t==='buy'?'.t-buy':'.t-sell').classList.add('on');document.getElementById('tSubmit').textContent=t==='buy'?'매입 기록':'판매 기록';document.getElementById('tSubmit').className='m-submit '+(t==='buy'?'buy-btn':'sell-btn')}
-async function submitT(){
-  var price=document.getElementById('tPrice').value,qty=document.getElementById('tQty').value,msgEl=document.getElementById('tMsg');
-  if(!price||!qty){msgEl.innerHTML='<div class="m-msg err">가격과 수량을 입력하세요</div>';return}
-  if(API_URL==='YOUR_APPS_SCRIPT_URL_HERE'){msgEl.innerHTML='<div class="m-msg err">API URL 미설정</div>';return}
-  msgEl.innerHTML='<div class="m-msg" style="color:var(--dim)">기록 중...</div>';
-  try{var r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:tradeType==='buy'?'record_buy':'record_sell',가격:parseFloat(price),수량:parseInt(qty)})});
-    var data=await r.json();if(data.상태==='OK'){msgEl.innerHTML='<div class="m-msg ok">✅ '+data.메시지+'</div>';addLog('ll-profit','[체결] '+(tradeType==='buy'?'매입':'판매')+' $'+price+' × '+qty+'개');document.getElementById('tPrice').value='';document.getElementById('tQty').value='';setTimeout(function(){closeModal();loadAll()},2000)}
-    else{msgEl.innerHTML='<div class="m-msg err">❌ '+(data.메시지||'오류')+'</div>'}}catch(e){msgEl.innerHTML='<div class="m-msg err">❌ '+e.message+'</div>'}}
-
+function setTT(t){tradeType=t;document.querySelectorAll('.m-tab').forEach(function(el){el.classList.remove('on')});document.querySelector(t==='buy'?'.t-buy':'.t-sell').classList.add('on');document.getElementById('tSubmit').textContent=t==='buy'?'매입':'판매';document.getElementById('tSubmit').className='m-submit '+(t==='buy'?'buy-btn':'sell-btn')}
+async function submitT(){var price=document.getElementById('tPrice').value,qty=document.getElementById('tQty').value,me=document.getElementById('tMsg');if(!price||!qty){me.innerHTML='<div class="m-msg err">입력 필요</div>';return}if(API_URL==='YOUR_APPS_SCRIPT_URL_HERE'){me.innerHTML='<div class="m-msg err">API 미설정</div>';return}me.innerHTML='<div class="m-msg" style="color:var(--dim)">...</div>';try{var r=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:tradeType==='buy'?'record_buy':'record_sell',가격:parseFloat(price),수량:parseInt(qty)})});var data=await r.json();if(data.상태==='OK'){me.innerHTML='<div class="m-msg ok">✅ '+data.메시지+'</div>';if(typeof spawnCoins==='function')spawnCoins(12);setTimeout(function(){closeModal();loadAll()},1500)}else me.innerHTML='<div class="m-msg err">❌ '+(data.메시지||'오류')+'</div>'}catch(e){me.innerHTML='<div class="m-msg err">❌ '+e.message+'</div>'}}
 loadAll();
 </script>
 </body>
